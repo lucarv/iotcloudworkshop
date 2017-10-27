@@ -1,0 +1,13 @@
+extends layout
+
+block content
+        .panel.panel-default
+            .panel-heading Cloud Messages
+            .panel-body            
+                form(action='/c2d', method='get', id='formb')
+                    fieldset
+                        .form-group.row
+                            .col-sm-8
+                                input.form-control(type='text', placeholder=msg)
+                            .col-sm-4
+                                button.btn.btn-space.btn-default(type='submit', name="action", form='formb') refresh

@@ -1,0 +1,17 @@
+extends layout
+
+block content
+        .panel.panel-default
+            .panel-heading Device Control
+            .panel-body        
+                 
+                form(action='/device', method='post', id='formb')
+                    fieldset
+                        .form-group.row
+                            .col-sm-1
+                                button.btn.btn-space.btn-success(type='submit', name="action", form='formb', value='activate') activate
+                            .col-sm-1
+                                button.btn.btn-space.btn-danger(type='submit', name="action", form='formb', value='deactivate') deactivate
+
+
+        
