@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  .panel.panel-default
+    .panel-heading Select Customer via Connection String
+    .panel-body
+      form(action='/', method='post', id='formCS')
+          fieldset
+            .form-group.row
+              .col-sm-12
+                label Connection String
+                input.form-control(type='text', name='cs', placeholder='enter connection string') 
+          button.btn.btn-primary(type='submit', name="action", form='formCS', value='register') connect
+        

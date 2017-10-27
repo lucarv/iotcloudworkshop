@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  .panel.panel-default
+    .panel-heading Search Devices
+    .panel-body
+        form(id='formsearch', action='/search', method='post')
+            fieldset
+                .form-group.row
+                    .col-sm-6
+                        label fw version
+                        .input-group
+                            input.form-control(name="fw", type='text', placeholder='enter fw version')
+                            span.input-group-btn
+                                button.btn.btn-primary(name="action", type='submit', form='formsearch', value='version')
+                                    span.glyphicon.glyphicon-search
+                    .col-sm-6
+                        label location
+                        .input-group
+                            input.form-control(name='zip', type='text', placeholder='enter zipcode')
+                            span.input-group-btn
+                                button.btn.btn-primary(name="action", type='submit', form='formsearch', value='zip') 
+                                    span.glyphicon.glyphicon-search
+
+
+
+
+                    

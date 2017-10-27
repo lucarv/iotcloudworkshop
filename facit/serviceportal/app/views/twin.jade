@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  .panel.panel-default
+    .panel-heading Device Reported Properties
+    .panel-body
+        -if(footer == 'no device selected')
+            .alert.alert-danger choose device to display properties
+        table.table.table-hover
+            thead
+                tr
+                th Property Name
+                th Value
+            tbody
+                tr
+                td Blocking timestamp
+                td #{lastBlockTime}
+                tr
+                td FW version
+                td #{version}
+                tr
+                td Reporting Interval
+                td #{interval}
+        form(action='/twin', method='post', id='twin')
+            button.btn.btn-primary(name="action", type='submit', form='twin', value='refresh') refresh
+
+

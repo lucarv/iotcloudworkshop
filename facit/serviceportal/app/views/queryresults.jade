@@ -1,0 +1,22 @@
+extends layout
+
+block content
+        .panel.panel-default
+            .panel-heading Search Results
+            .panel-body
+                form(action='/devsel', method='post', id='formb')
+                    fieldset
+                        table.table.table-bordered
+                            thead
+                            tr
+                                th Device Id
+                                th Select
+                            tbody
+                            each device in devices
+                                tr
+                                td= device
+                                td
+                                    .radio
+                                        input(type='radio', name=device)
+            .panel-body
+                button.btn.btn-space.btn-primary(type='submit', form='formb', value=device) apply

@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  .panel.panel-default
+    .panel-heading Direct Commands
+    .panel-body
+        form(action='/commands', method='post', id='formb')
+          button.btn.btn-space.btn-danger(type='submit', name="action", form='formb', value='block') block
+          button.btn.btn-space.btn-success(type='submit', name="action", form='formb', value='release') release
+
+
+
