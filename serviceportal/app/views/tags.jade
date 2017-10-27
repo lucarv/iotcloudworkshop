@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  .panel.panel-default
+    .panel-heading Device Reported Properties
+    .panel-body
+        table.table.table-hover
+            thead
+                tr
+                th Tag Name
+                th Value
+            tbody
+                tr
+                td Location
+                td #{location}
+                tr
+                td Connected via
+                td #{connType}
