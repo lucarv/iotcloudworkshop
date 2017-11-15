@@ -10,10 +10,15 @@ var Protocol = require('azure-iot-device-mqtt').Mqtt;
 
 // direct methods
 var onBlock = function (request, response) {
-    var client = clientFromConnectionString(utils.getDevice().cs);
+    device = utils.getDevice();
+    hubName = device.cs.substring(device.cs.indexOf('=') + 1, device.cs.indexOf(';'));
+    devCS = 'HostName=' + hubName + ';DeviceId=' + device.id + ';SharedAccessKey=' + device.key;
+    console.log('devCS connstring ' + devCS);
+    var client = clientFromConnectionString(devCS);
+
     // Respond the cloud app for the direct method
     response.send(200, 'Electricity supply is now blocked', function (err) {
-        if (!err) {
+        if (err) {
             console.error('An error occured when sending a method response:\n' + err.toString());
         } else {
             console.log('Response to method \'' + request.methodName + '\' sent successfully.');
