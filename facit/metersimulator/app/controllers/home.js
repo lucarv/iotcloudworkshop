@@ -46,6 +46,26 @@ function printDeviceInfo(err, deviceInfo, res) {
         deviceKey = deviceInfo.authentication.symmetricKey.primaryKey;
         utils.setDeviceKey(deviceKey);
     }
+    if (err) console.log('printDeviceInfo error: ' + err.toString());
+}
+
+function sendTelemetry(intervalToUse, client, deviceId, msgType){
+    // Create a message and send it to the IoT Hub at interval
+    myTimer = setInterval(function () {
+        var reading = utils.getConsumption();
+        var data = JSON.stringify({ deviceId: deviceId, timestamp: Date.now(), consumption: reading.pwr, appliances: reading.appls });
+        console.log(data);
+        var message = new Message(data);
+
+        if (msgType == 'delta') {
+            if (reading != watt) {
+                client.sendEvent(message, printResultFor('send'));
+                watt = reading;
+            } else
+                console.log('skip mesaging as no changes');
+        } else
+            client.sendEvent(message, printResultFor('send'));
+    }, intervalToUse);
 }
 
 // ROUTING
@@ -70,7 +90,10 @@ router.post('/', function (req, res, next) {
 
             // register device if not already done
             // then save the device suthentication key
-            var device = new iothub.Device(null);
+            var device = {
+                deviceId: null,
+                status: 'enabled'
+              };
             deviceId = req.body.devID;
             device.deviceId = req.body.devID;
             devCS = req.body.cs;
@@ -79,8 +102,10 @@ router.post('/', function (req, res, next) {
             utils.setDevice(deviceId, devCS);
 
             registry.create(device, function (err, deviceInfo, res) {
-                if (err)
+                if (err){
+                    console.log('err registering device: ' + err);
                     registry.get(device.deviceId, printDeviceInfo);
+                }
                 if (deviceInfo)
                     printDeviceInfo(err, deviceInfo, res);
             });
@@ -127,7 +152,7 @@ router.post('/msg', function (req, res, next) {
             var client = clientFromConnectionString(devCS);
             if (req.body.interval != '')
                 interval = req.body.interval;
-            devfunc.updateTwin('interval', interval);
+            //devfunc.updateTwin('interval', interval);
 
             client.open(function (err) {
                 if (err) {
@@ -138,21 +163,34 @@ router.post('/msg', function (req, res, next) {
                         c2dmsg = ('Id: ' + msg.messageId + ' Body: ' + msg.data);
                         client.complete(msg, printResultFor('completed'));
                     })
-                    // Create a message and send it to the IoT Hub at interval
-                    myTimer = setInterval(function () {
-                        var reading = utils.getConsumption();
-                        var data = JSON.stringify({ deviceId: deviceId, timestamp: Date.now(), consumption: reading.pwr, appliances: reading.appls });
-                        var message = new Message(data);
 
-                        if (req.body.msgType == 'delta') {
-                            if (reading != watt) {
-                                client.sendEvent(message, printResultFor('send'));
-                                watt = reading;
-                            } else
-                                console.log('skip mesaging as no changes');
-                        } else
-                            client.sendEvent(message, printResultFor('send'));
-                    }, interval);
+                    //add callback to the directmethod 'shutdownUsage'
+                    client.onDeviceMethod('shutdownUsage', devfunc.onBlock);
+                    
+                    //register for desired changes
+                    client.getTwin(function(err, twin) {
+                        if (err) {
+                            console.error('could not get twin');
+                        } else {
+                            console.log('retrieved device twin');
+                            
+                            twin.on('properties.desired.interval', function(delta) {
+                                console.log("received change: "+JSON.stringify(delta));
+                                var currentInterval = interval;
+                                if (delta.ms != currentInterval) {
+                                    console.log("Updatig interval: " + delta.ms);
+                                    interval = delta.ms;
+                                    //update sampling rate
+                                    clearInterval(myTimer);
+                                    sendTelemetry(interval, client, deviceId, msgType);
+                                }
+                            });
+                        }
+                    });
+
+                    //call setTimeout
+                    sendTelemetry(interval, client, deviceId, msgType);
+                    
                 }
             })
             msg = 'starting telemetry at ' + interval + ' ms interval';
