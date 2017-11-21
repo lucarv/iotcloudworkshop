@@ -21,6 +21,9 @@ block content
                 tr
                 td Reporting Interval
                 td #{interval}
+                tr
+                td Connectivity Type
+                td #{connType}                
         form(action='/twin', method='post', id='twin')
             button.btn.btn-primary(name="action", type='submit', form='twin', value='refresh') refresh
 

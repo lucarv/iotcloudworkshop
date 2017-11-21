@@ -1,15 +1,19 @@
 // Example model
 
 
-function Device(id, cs) {
+function Device(hubcs, id, cs) {
   this.id = id;
   this.cs = cs;
-  this.key = '';
+  this.hubcs = hubcs;
+  this.key = null;
   this.appliances = [];
   this.location = 'not set';
   this.fw_version = 'not set';
-  this.connType = 'not set'
-
+  this.connType = 'not set';
+  this.interval = 60000;
+  this.client = null;
+  this.connectionState = null;
+  this.msgType = 'not set';
 }
 
 Device.prototype.getDeviceId = function () {
@@ -34,6 +38,10 @@ Device.prototype.setAppliances = function (appl) {
 
 Device.prototype.getAppliances = function () {
   return this.appliances;
+}
+
+Device.prototype.setClient = function (client) {
+  this.client = client;
 }
 
 module.exports = Device;

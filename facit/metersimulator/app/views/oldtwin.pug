@@ -1,0 +1,59 @@
+extends layout
+
+block content
+        .panel.panel-default
+            .panel-heading Reported Properties
+            .panel-body   
+                .col-sm-3
+                    label Telemetry Interval
+                    .input-group
+                        input(type='text', placeholder=rep_interval readonly)
+                .col-sm-3
+                    label Telemetry Type
+                    .input-group
+                        input(type='text', placeholder=rep_msgType readonly)                        
+                .col-sm-3
+                    label Connectivity type
+                    .input-group
+                        input(type='text', placeholder=rep_connType readonly) 
+                .col-sm-3
+                    label FW Version
+                    .input-group
+                        input(type='text', placeholder=rep_version readonly)                         
+        .panel.panel-default
+            .panel-heading Desired Properties
+            .panel-body   
+                .col-sm-3
+                    label Telemetry Interval
+                    .input-group
+                        input(type='text', placeholder=des_interval)
+                .col-sm-3
+                    label Telemetry Type
+                    .input-group
+                        input(type='text', placeholder=des_type)                        
+                .col-sm-3
+                    label Connectivity type
+                    .input-group
+                        input(type='text', placeholder=des_connType) 
+                .col-sm-3
+                    label FW Version
+                    .input-group
+                        input(type='text', placeholder=des_version) 
+        .panel.panel-default
+            .panel-heading Report
+            .panel-body   
+
+                form(id='formtwin', action='/twin', method='post')
+                    fieldset
+                        .form-group.row
+                            .col-sm-2
+                                .input-group
+                                    select#form.form-control(name = "connType")
+                                        option(value='') connectivity type
+                                        option(value='cellular') cellular
+                                        option(value='wifi') wifi
+                                        option(value='fixed') fixed 
+                            .col-sm-2                                 
+                                button.btn.btn-primary(name="action", type='submit', form='formtwin', value='connType') update 
+                br
+                p * to change the telemetry interval go to the telemetry panel                                          

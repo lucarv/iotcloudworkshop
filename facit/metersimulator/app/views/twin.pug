@@ -1,0 +1,48 @@
+extends layout
+
+block content
+    .panel.panel-default
+        .panel-heading Device Properties
+        .panel-body
+            -if(footer == 'no device selected')
+                .alert.alert-danger choose device to display properties
+            table.table.table-hover
+                thead
+                    tr
+                    th Property Name
+                    th Reported
+                    th Desired
+                tbody
+                    tr
+                    td FW version
+                    td #{rep_version}
+                    td #{des_version}
+                    tr
+                    td Telemetry Interval
+                    td #{rep_interval}
+                    td #{des_interval}
+                    tr
+                    td Telemetry Type
+                    td #{rep_msgType}
+                    td #{des_msgType}
+                    tr
+                    td Connectivity Type
+                    td #{rep_connType}                
+                    td #{des_connType}   
+    .panel.panel-default
+        .panel-heading Report
+        .panel-body   
+            form(id='formtwin', action='/twin', method='post')
+                fieldset
+                    .form-group.row
+                        .col-sm-2
+                            .input-group
+                                select#form.form-control(name = "connType")
+                                    option(value='') connectivity type
+                                    option(value='cellular') cellular
+                                    option(value='wifi') wifi
+                                    option(value='fixed') fixed 
+                        .col-sm-2                                 
+                            button.btn.btn-primary(name="action", type='submit', form='formtwin', value='connType') update 
+            br
+            p * to change the telemetry parameters go to the telemetry panel        

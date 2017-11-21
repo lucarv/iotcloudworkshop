@@ -12,17 +12,16 @@ var connectionString = '';
 var client,
   registry;
 
-var location = 'not yet reported',
+var location = 'not yet set',
   lastBlockTime = 'not yet reported',
-  connType,
-  version,
-  interval,
+  connType = 'not yet reported',
+  fw_version = 'not yet set',
+  interval = 'not yet reported',
   lastRead,
   msg;
 
 
 function printDeviceInfo(deviceInfo, res) {
-
   if (deviceInfo)
     console.log('Device ID: ' + deviceInfo.deviceId);
   else
@@ -39,7 +38,6 @@ var queryTwins = function (prop, key, res, next) {
       var query = registry.createQuery("SELECT * FROM devices WHERE tags.location.zipcode = '" + key + '\'', 100);
       break;
     case 'version':
-      console.log('searching: ' + JSON.stringify(twin.properties.reported.fw_version.version));
       var query = registry.createQuery("SELECT * FROM devices WHERE properties.reported.fw_version.version = '" + key + '\'', 100);
       break;
   }
@@ -62,29 +60,36 @@ var queryTwins = function (prop, key, res, next) {
 }
 
 function getDesiredProperties(res, next) {
-  var desiredFW = 'unknown'
-  var desiredInterval = 'unknown'
+  var desiredConnType = 'not yet set';
+  var desiredInterval = 'not yet set';
+  var desiredFW = 'not yet set';
+  var desiredLocation = 'not yet set';
+
 
   registry.getTwin(deviceId, function (err, twin) {
     if (err)
       console.error(err.constructor.name + ': ' + err.message);
     else {
+      if (twin.properties.desired.hasOwnProperty('connectivity'))
+        desiredConnType = twin.properties.desired.connectivity.type;
 
-      if (twin.properties.desired.fw != undefined)
-        desiredFW = twin.properties.desired.fw.version;
-
-      if (twin.properties.desired.interval != undefined)
+      if (twin.properties.desired.hasOwnProperty('interval'))
         desiredInterval = twin.properties.desired.interval.ms;
 
-      console.log('desired fw: ' + desiredFW)
-      console.log('desired interval: ' + desiredInterval)
+      if (twin.properties.desired.hasOwnProperty('fw'))
+        desiredFW = twin.properties.desired.fw.version;
+
+      if (twin.properties.desired.hasOwnProperty('fw'))
+        desiredFW = twin.properties.desired.fw.version;
     }
 
     res.render('twindes', {
       title: 'utility mgmt console',
       deviceId: deviceId,
-      version: desiredFW,
+      connType: desiredConnType,
       interval: desiredInterval,
+      version: desiredFW,
+      location: desiredLocation,
       footer: 'desired properties'
     });
   })
@@ -104,7 +109,7 @@ function getReportedProperties(res, next) {
       if (err) {
         msg = 'Could not query twins: ' + err.constructor.name + ': ' + err.message;
       } else {
-        version = twin.properties.reported.fw_version.version;
+        fw_version = twin.properties.reported.fw_version.version;
       }
     }
     if (twin.properties.reported.interval != null) {
@@ -114,13 +119,21 @@ function getReportedProperties(res, next) {
         interval = twin.properties.reported.interval.ms;
       }
     }
+    if (twin.properties.reported.hasOwnProperty('connectivity')) {
+      if (err) {
+        msg = 'Could not query twins: ' + err.constructor.name + ': ' + err.message;
+      } else {
+        connType = twin.properties.reported.connectivity.type;
+      }
+    }
 
     res.render('twin', {
       title: 'utility mgmt console',
       deviceId: deviceId,
       lastBlockTime: lastBlockTime,
-      version: version,
+      version: fw_version,
       interval: interval,
+      connType: connType,
       footer: 'reported properties'
     });
   });
@@ -191,7 +204,6 @@ router.post('/device', function (req, res, next) {
 });
 
 router.get('/tags', function (req, res, next) {
-
   if (deviceId == 'not selected')
     res.render('done', {
       title: 'utility mgmt console',
@@ -206,35 +218,37 @@ router.get('/tags', function (req, res, next) {
           msg: 'no device selected, choose device on the top bar or via search'
         });
       } else {
+        if (twin.tags.hasOwnProperty('location'))
+          location = twin.tags.location.zipcode;
 
         res.render('tags', {
           title: 'utility mgmt console',
-          location: twin.tags.location.zipcode,
-          connType: twin.tags.connectivity.type
+          location: location
         });
-        console.log(twin.tags)
       }
     });
 });
 
-router.get('/des', function (req, res, next) {
+router.get('/edit', function (req, res, next) {
   getDesiredProperties(res, next);
 });
 
-router.post('/des', function (req, res, next) {
+router.post('/edit', function (req, res, next) {
   switch (req.body.action) {
     case 'fw':
-      setDesiredProperty(res, next, 'fw', req.body.fw)
+      setDesiredProperty(res, next, 'fw', req.body.fw_version)
       break;
     case 'interval':
       setDesiredProperty(res, next, 'interval', req.body.interval)
       break;
+    case 'connType':
+      setDesiredProperty(res, next, 'conType', req.body.connType)
+      break;      
 
   }
 });
 
 router.get('/twin', function (req, res, next) {
-  console.log('device id on get: ' + deviceId)
   if (deviceId != 'not selected')
     // fetch twin properties here
     getReportedProperties(res, next);
@@ -258,7 +272,7 @@ router.post('/twin', function (req, res, next) {
         location: location,
         lastbBlockTime: lastbBlockTime,
         connType: connType,
-        version: version,
+        version: fw_version,
         footer: msg
       });
       break;
@@ -267,7 +281,6 @@ router.post('/twin', function (req, res, next) {
 });
 
 router.get('/search', function (req, res, next) {
-  console.log('search')
   res.render('search', {
     title: 'utility mgmt console',
     deviceId: deviceId,
@@ -276,7 +289,6 @@ router.get('/search', function (req, res, next) {
 });
 
 router.post('/search', function (req, res, next) {
-  console.log('search: ' + JSON.stringify(req.body))
   switch (req.body.action) {
     case 'version':
       queryTwins('version', req.body.fw, res, next)
@@ -297,7 +309,6 @@ router.get('/commands', function (req, res, next) {
 });
 
 router.post('/commands', function (req, res, next) {
-  console.log('client: ' + client)
   switch (req.body.action) {
     case 'block':
       var methodName = "block";
@@ -309,8 +320,6 @@ router.post('/commands', function (req, res, next) {
       };
 
       client.invokeDeviceMethod(deviceId, methodParams, function (err, result) {
-        console.log('requested block');
-
         if (err) {
           msg = "Direct method error: " + err.message;
         } else {

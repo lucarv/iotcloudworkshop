@@ -1,12 +1,14 @@
 'use strict';
 var utils = require('./utils');
-var device, hubName, devCS, msg ='';
+var msg = '';
 
 // azure sdk
 var iothub = require('azure-iothub');
 var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
+var Device;
+var openConn = false;
 
 // direct methods
 var onBlock = function (request, response) {
@@ -54,9 +56,7 @@ var onRelease = function (request, response) {
 }
 // twin properties
 var updateTwin = function (property, value) {
-
-    device = utils.getDevice();
-
+    Device = utils.getDevice();
     switch (property) {
         case 'appl':
             var appArray = utils.getAppliances()
@@ -77,15 +77,21 @@ var updateTwin = function (property, value) {
             };
             writeProp(patch);
             break;
-        case 'connType':
+        case 'msgType':
             var patch = {
-                tags: {
-                    connectivity: {
-                        type: value
-                    }
+                telemetry: {
+                    type: value
                 }
             };
-            writeTag(patch);
+            writeProp(patch);
+            break;
+        case 'connType':
+            var patch = {
+                connectivity: {
+                    type: value
+                }
+            };
+            writeProp(patch);
             break;
         case 'location':
             var patch = {
@@ -99,18 +105,20 @@ var updateTwin = function (property, value) {
             break;
         case 'fw_version':
             var patch = {
-                fw_version: {
-                    version: value
+                tags: {
+                    fw_version: {
+                        version: value
+                    }
                 }
             };
-            writeProp(patch);
+            writeTag(patch);
             break;
     }
 }
 
 var writeTag = function (patch) {
-    var registry = iothub.Registry.fromConnectionString(device.cs);
-    registry.getTwin(device.id, function (err, twin) {
+    var registry = iothub.Registry.fromConnectionString(utils.getHubCS());
+    registry.getTwin(Device.id, function (err, twin) {
         if (err) {
             console.error(err.constructor.name + ': ' + err.message);
         } else {
@@ -125,34 +133,42 @@ var writeTag = function (patch) {
 }
 
 var writeProp = function (patch) {
-    hubName = device.cs.substring(device.cs.indexOf('=') + 1, device.cs.indexOf(';'));
-    devCS = 'HostName=' + hubName + ';DeviceId=' + device.id + ';SharedAccessKey=' + device.key;
-    var client = clientFromConnectionString(devCS);
-    client.open(function (err) {
-        if (err)
-            msg = 'could not open IotHub client';
+    if (Device.client === null) { // if the device is not currently connected, open an MQTT connection
+        openConn = true;
+        var client = clientFromConnectionString(Device.cs);
+        utils.setClient(client);
+    }
+    if (Device.connectionState != 'open') // if no connection open, create one and close after reporting property
+        Device.client.open(function (err) {
+            if (err) // MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
+                msg = 'could not open IotHub client';
+            utils.setConnectionState('open');
+        });
+
+    Device.client.getTwin(function (err, twin) {
+        if (err)  // ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
+            msg = 'could not get twin: ' + JSON.stringify(err);
         else {
-            client.getTwin(function (err, twin) {
-                console.log("client successfully opened!")
-
-                if (err) {
-                    msg = 'could not get twin: ' + JSON.stringify(err);
-                    console.log('could not get twin: ' + JSON.stringify(err));
-
+            twin.properties.reported.update(patch, function (err) {
+                if (err)
+                    console.log('could not update twin: ' + err); // ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
+                else
+                    console.log('twin state reported');
+            });
+        }
+        // close the MQTT connection if opened just to update twin
+        if (openConn === true) {
+            Device.client.close(function (err) {
+                if (!err) {
+                    openConn = false;
+                    utils.setClient(null);
+                    utils.setConnectionState('closed');
                 }
-                else {
-                    twin.properties.reported.update(patch, function (err) {
-                        if (err)
-                            console.log('could not update twin: ' + err);
-                        else
-                            console.log('twin state reported');
-                    });
-                }
+                // ELSE: ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
             });
         }
     });
 }
-
 
 module.exports.onBlock = onBlock;
 module.exports.onRelease = onRelease;

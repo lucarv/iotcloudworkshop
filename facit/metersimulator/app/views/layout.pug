@@ -31,30 +31,39 @@ html(lang='en')
 
       #navbar-inverse.collapse.navbar-collapse
         ul.nav.navbar-nav
-          li.active
-            a( href="/") Select Grid by CS
-          li
-            a( href="/search") Search
+          li 
+            a( href="/", data-tooltip='register device' ) register
+          // li REMOVE THIS FROM THE MENU AS NOT NEEDED IN THE LAB
+            a( href="/device", data-tooltip='control device' ) 
+              span.glyphicon.glyphicon-modal-window                                          
+          li 
+            a( href="/msg", data-tooltip='telemetry' ) telemetry
+              //span.glyphicon.glyphicon-send   
+          li 
+            a( href="/c2d", data-tooltip='message box' ) messages
+            /// span.glyphicon.glyphicon-envelope
           li.dropdown
             a.dropdown-toggle(href='#', data-toggle='dropdown')
-              | Device Twin
+              | twin
               b.caret
             ul.dropdown-menu
               li
-                a(href='/twin') Reported
+                a(href='/properties') properties
               li
-                a(href='/des') Desired
-              li
-                a(href='/tags') Tags
-          li
-            a( href="/commands") Commands
+                a(href='/tags') tags
+     
 
-        ul.nav.navbar-nav.navbar-right
+        ul.nav.navbar-nav.navbar-right      
           li.ph device id
-          form.navbar-form.navbar-left(action='/device', method='post', id='forma')
+          form.navbar-form.navbar-left(role='search')
             .form-group
-              input.form-control(type='text', name='devID', placeholder=deviceId)
-              button.btn.btn-space.btn-primary(type='submit', name="action", form='forma', value='register') connect
+              input.form-control(type='text', placeholder=deviceId)           
+          li 
+            a( href="/appliances", data-tooltip='register appliances' ) 
+              span.glyphicon.glyphicon-plus          
+          li 
+            a( href="/house", data-tooltip='turn on/off appliances' ) 
+              span.glyphicon.glyphicon-off   
 
 
     block content

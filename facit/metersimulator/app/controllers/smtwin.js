@@ -5,11 +5,6 @@ var express = require('express'),
 var utils = require('../lib/utils');
 var devfunc = require('../lib/devfunc');
 
-
-var version = 'not set';
-var location = 'not set';
-var device, hubName, devCS;
-
 //middleware
 var bodyParser = require('body-parser');
 router.use(bodyParser.json());
@@ -20,6 +15,8 @@ var iothub = require('azure-iothub');
 var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
+
+var des_interval = 'not checked', des_connType = 'not checkd', des_version = 'not checked', des_msgType = 'not checked';
 
 // routing 
 module.exports = function (app) {
@@ -33,12 +30,11 @@ router.get('/device', function (req, res, next) {
 });
 
 router.post('/device', function (req, res, next) {
-    device = utils.getDevice();
-    hubName = device.cs.substring(device.cs.indexOf('=') + 1, device.cs.indexOf(';'));
-    devCS = 'HostName=' + hubName + ';DeviceId=' + device.id + ';SharedAccessKey=' + device.key;
+    var Device = utils.getDevice();
+    cd = Device.cs;
     switch (req.body.action) {
         case 'activate':
-            var client = clientFromConnectionString(devCS);
+            var client = clientFromConnectionString(cs);
             client.open(function (err) {
                 if (err) {
                     console.log('Could not connect: ' + err);
@@ -56,7 +52,7 @@ router.post('/device', function (req, res, next) {
             break;
 
         case 'deactivate':
-            var client = clientFromConnectionString(devCS);
+            var client = clientFromConnectionString(cs);
             client.close(function (err) {
                 if (err) {
                     console.log('Could not disconnect: ' + err);
@@ -79,69 +75,107 @@ router.post('/device', function (req, res, next) {
     }
 });
 
+router.get('/properties', function (req, res, next) {
+    var Device = utils.getDevice();
 
-router.get('/twin', function (req, res, next) {
-
-    var location = 'not yet set'
-    var version = 'not yet set'
-
-
-    var registry = iothub.Registry.fromConnectionString(utils.getDevice().cs);
-    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + utils.getDevice().id + '\'', 100);
+    var registry = iothub.Registry.fromConnectionString(Device.hubcs);
+    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + Device.id + '\'', 100);
     query.nextAsTwin(function (err, prop) {
         if (err)
             console.error('Failed to fetch the results: ' + err.message);
         else {
             if (prop.length > 0) {
-                console.log(prop[0].tags.location)
-                console.log(prop[0].properties.reported)
-                
-                
-                if (prop[0].tags.location !== undefined)
-                    location = prop[0].tags.location.zipcode;
-                if (prop[0].properties.reported.fw_version !== undefined)                    
-                    version = prop[0].properties.reported.fw_version.version;
-                    
-            }
+                if (prop[0].properties.desired.hasOwnProperty('interval'))
+                    des_interval = prop[0].properties.desired.interval.ms;
+                else
+                    des_interval = 'not set'
 
+                if (prop[0].properties.desired.hasOwnProperty('telemetry'))
+                    des_msgType = prop[0].properties.desired.telemetry.type;
+                else
+                    des_msgType = 'not set'
+
+                if (prop[0].properties.desired.hasOwnProperty('connectivity'))
+                    des_connType = prop[0].properties.desired.connectivity.type;
+                else
+                    des_connType = 'not set';
+
+                if (prop[0].properties.desired.hasOwnProperty('fw_version'))
+                    des_version = prop[0].properties.reported.fw_version.version;
+                else
+                    des_version = 'not set';
+            }
         }
         res.render('twin', {
             title: "smart meter simulator",
-            footer: 'ready to manage device properties' + utils.getDevice().location + '/ ' + utils.getDevice().fw_version,
-            deviceId: utils.getDevice().id,
-            location: location,
-            fw_version: version
+            footer: 'ready to manage device properties',
+            deviceId: Device.id,
+            rep_interval: Device.interval,
+            rep_connType: Device.connType,
+            rep_version: Device.fw_version,
+            rep_msgType: Device.msgType,
+            des_interval: des_interval,
+            des_msgType: des_msgType,
+            des_connType: des_connType,
+            des_version: des_version
         });
     })
+});
 
+router.get('/tags', function (req, res, next) {
+    var Device = utils.getDevice();
 
+    var registry = iothub.Registry.fromConnectionString(Device.hubcs);
+    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + Device.id + '\'', 100);
+    query.nextAsTwin(function (err, prop) {
+        if (err)
+            console.error('Failed to fetch the results: ' + err.message);
+        else {
+            if (prop.length > 0) {
+                if (prop[0].tags.hasOwnProperty(location))
+                    var location = prop[0].tags.location.zipcode;
+                else
+                    var location = 'not set'
+            }
+        }
+        res.render('tags', {
+            title: "smart meter simulator",
+            footer: 'ready to manage device properties',
+            deviceId: Device.id,
+            location: Device.location
+        });
+    })
 });
 
 router.post('/twin', function (req, res, next) {
-    device = utils.getDevice();
-
-
-
+    var Device = utils.getDevice();
+    // bad code below, upodating the model from here. FIX IT
     switch (req.body.action) {
         case 'fw_version':
             devfunc.updateTwin('fw_version', req.body.fw_version);
-            device.fw_version = req.body.fw_version;
+            Device.fw_version = req.body.fw_version;
             break;
         case 'location':
             devfunc.updateTwin('location', req.body.location);
-            device.location = req.body.location;
+            Device.location = req.body.location;
             break;
         case 'connType':
             devfunc.updateTwin('connType', req.body.connType);
-            device.connType = req.body.connType;
+            Device.connType = req.body.connType;
             break;
     }
 
     res.render('twin', {
         title: "smart meter simulator",
-        deviceId: utils.getDevice().id,
-        footer: 'twin property updated',
-        location: location,
-        version: version
+        footer: 'ready to manage device properties',
+        deviceId: Device.id,
+        rep_interval: Device.interval,
+        rep_connType: Device.connType,
+        rep_version: Device.fw_version,
+        rep_msgType: Device.msgType,
+        des_interval: des_interval,
+        des_msgType: des_msgType,
+        des_connType: des_connType,
+        des_version: des_version
     });
 });
