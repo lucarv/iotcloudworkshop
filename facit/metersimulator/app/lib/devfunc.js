@@ -150,10 +150,12 @@ var writeProp = function (patch) {
             msg = 'could not get twin: ' + JSON.stringify(err);
         else {
             twin.properties.reported.update(patch, function (err) {
+                /*
                 if (err)
                     console.log('could not update twin: ' + err); // ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
                 else
                     console.log('twin state reported');
+                    */
             });
         }
         // close the MQTT connection if opened just to update twin

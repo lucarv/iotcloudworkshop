@@ -64,6 +64,7 @@ var createSession = function () {
             return false;
         } else {
             utils.setConnectionState('open');
+            console.log('session created');
             // ARCH NOTE: read last received message -> move this outside this loop
             client.on('message', function (msg) {
                 c2dmsg = ('Id: ' + msg.messageId + ' Body: ' + msg.data);
@@ -72,37 +73,44 @@ var createSession = function () {
 
             // subscribed to property changes
             // ARCH NOTE: move this outside of this loop
-            client.getTwin(function (err, twin) { // check if he telemetry interval has ben set by the operator               
+            client.getTwin(function (err, twin) { // check if he telemetry interval has ben set by the operator    
                 if (err) {
                     console.error('could not get twin');
                 } else {
-
                     twin.on('properties.desired', function (desiredChange) {
                         if (twin.properties.desired.$version !== desiredVersion) {
                             desiredVersion = twin.properties.desired.$version;
 
                             // stop telemetry and restart again with a new frequency
-                            if (desiredChange.hasOwnProperty('interval'))
+                            if (desiredChange.hasOwnProperty('interval')) {
                                 interval = twin.properties.desired.interval.ms
-                            if (desiredChange.hasOwnProperty('telemetry'))
+                                devfunc.updateTwin('interval', interval);
+                            }
+                            if (desiredChange.hasOwnProperty('telemetry')) {
                                 msgType = twin.properties.desired.telemetry.type
+                                devfunc.updateTwin('msgType', msgType);
+                            }
                             if (telemetry) {
                                 clearInterval(myTimer);
                                 telemetry = false;
                                 startTelemetry(Device.client);
                             }
+                            // add code here to manage other desired properties
+                            // such as desired FW version
+                            // .......
                         }
                     });
+                    return true;
                 }
             });
         }
     });
 }
+
 var startTelemetry = function (client) {
     // NOTE -> uses a global var interval, maybe better to localized it
     // Create a message and send it to the IoT Hub at interval
     telemetry = true;
-    console.log('new telemetry interval: ' + interval);
     myTimer = setInterval(function () {
         var reading = utils.getConsumption();
         var data = JSON.stringify({ deviceId: deviceId, timestamp: Date.now(), consumption: reading.pwr, appliances: reading.appls });
@@ -132,17 +140,18 @@ module.exports = function (app) {
 
 router.get('/', function (req, res, next) {
     var exists = utils.getExists();
-    if (exists === false) {
+    if (!exists) {
         res.render('index', {
             title: "smart meter simulator",
             footer: 'the IOT HUB connection string is available on the azure portal'
         });
     }
     else {
-        var device = utils.getDevice();
+        var Device = utils.getDevice();
+        createSession();
         res.render('messaging', {
             title: "smart meter simulator",
-            deviceId: device.deviceId,
+            deviceId: Device.id,
             footer: "device already registered, resuming"
         });
     }
@@ -151,7 +160,7 @@ router.get('/', function (req, res, next) {
 router.post('/', function (req, res, next) {
     switch (req.body.action) {
         case 'register':
-            if (!utils.getExists()) {
+            if (!utils.getExists()) { // first time using this device
                 cs = req.body.cs;
                 var registry = iothub.Registry.fromConnectionString(cs);
 
@@ -162,12 +171,12 @@ router.post('/', function (req, res, next) {
                 var device = { deviceId: deviceId };
 
                 registry.create(device, function (err, deviceInfo, result) {
-                    if (err) {
+                    if (err) { // error regsitering to hub
                         registry.get(device.deviceId, function (err, deviceInfo, res) {
                             if (deviceInfo) {
                                 deviceKey = deviceInfo.authentication.symmetricKey.primaryKey;
                                 setDeviceCS(cs, deviceId, deviceKey);
-                                var session = createSession();
+                                createSession(); // really crap code, assumes that session creation will always succeeds
                             }
                             else // something really wrong happened, break the flow and show the error
                                 res.render('error', { error: err });
@@ -177,25 +186,22 @@ router.post('/', function (req, res, next) {
                             deviceId: deviceId,
                             footer: "ERROR: " + err.message + " You can continue with this ID or try again with a different one"
                         });
-                    } else
-                        if (deviceInfo) {
-                            deviceKey = deviceInfo.authentication.symmetricKey.primaryKey;
-                            setDeviceCS(cs, deviceId, deviceKey);
-                            var session = createSession();
-                            if (!session) {
-                                msg = 'Could not connect: ' + err;
-                                res.render('error', { error: err });
-                            } else {
-                                msg = "device successfully registered with IoT Hub";
-                                res.render('messaging', {
-                                    title: "smart meter simulator",
-                                    deviceId: deviceId,
-                                    footer: msg
-                                });
-                            }
-                        }
+                    } else {
+                        deviceKey = deviceInfo.authentication.symmetricKey.primaryKey;
+                        setDeviceCS(cs, deviceId, deviceKey);
+                        createSession(); // really crap code, assumes that session creation will always succeeds
+
+                        msg = "device successfully registered with IoT Hub";
+                        res.render('messaging', {
+                            title: "smart meter simulator",
+                            deviceId: deviceId,
+                            footer: msg
+                        });
+                    }
                 });
-            } else {
+            } else { // this device already gone through registration
+                createSession(); // really crap code, assumes that session creation will always succeeds
+
                 msg = "device already registered, restoring";
                 res.render('messaging', {
                     title: "smart meter simulator",

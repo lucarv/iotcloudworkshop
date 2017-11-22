@@ -7,7 +7,7 @@ var fs = require('fs');
 var device = getDeviceFromFile;
 var applon = [];
 var pwr = 0;
-var exists;
+var exists = false;
 getDeviceFromFile();
 
 function getHubCS(cs) {
@@ -19,24 +19,31 @@ function getDeviceFromFile() {
         if (err) {
             exists = false;
         }
-        if (!savedDevice) {
-            // create model from file
-            var jsonDevice = JSON.parse(savedDevice);
-            device = new Device(jsonDevice.hubcs, jsonDevice.id, jsonDevice.cs);
-            device.key = jsonDevice.key;
-            device.appliances = jsonDevice.appliances;
-            device.connType = jsonDevice.connType;
-            device.fw_version = jsonDevice.fw_version;
-            device.interval = jsonDevice.interval;
-            device.location = jsonDevice.location;
-            exists = true;
+        else {
+            if (savedDevice.length > 0) {
+                console.log('restoring device')
+                
+                // create model from file
+                var jsonDevice = JSON.parse(savedDevice);
+                device = new Device(jsonDevice.hubcs, jsonDevice.id, jsonDevice.cs);
+                device.key = jsonDevice.key;
+                device.appliances = jsonDevice.appliances;
+                device.connType = jsonDevice.connType;
+                device.fw_version = jsonDevice.fw_version;
+                device.interval = jsonDevice.interval;
+                device.location = jsonDevice.location;
+                exists = true;
+            }
+            else {
+                console.log('initial registration')
+                exists = false
+            }
         }
-        else
-            exists = false
     });
 }
 
 var getExists = function () {
+    console.log(exists);
     return exists;
 }
 
