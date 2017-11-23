@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  .panel.panel-default
+    .panel-heading Device Selection
+    .panel-body
+
+      form(action='/device', method='post', id='forma')
+          fieldset
+            .form-group.row
+              .col-sm-3
+                h3 selected device: #{deviceId}
+
+

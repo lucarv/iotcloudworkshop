@@ -1,0 +1,62 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width')
+    title= title
+    block css
+      link(href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel='stylesheet')
+      link(rel='stylesheet', href='/css/tooltip.css')
+      link(rel='stylesheet', href='/css/style.css')
+      link(href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", rel="stylesheet")
+      link(rel='stylesheet', href='/css/style.css')
+      link(rel='stylesheet', href='/css/blue-footer.css')
+      script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js')
+      script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js', integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa', crossorigin='anonymous')
+
+    block js
+      if ENV_DEVELOPMENT
+        script(src='http://localhost:35729/livereload.js')
+  body
+  .container.fluid
+    nav.navbar.navbar-custom( role="navigation" )
+      .navbar-header
+        button.navbar-toggle.collapsed( type="button", data-toggle="collapse", data-target="#navbar-inverse", aria-expanded="false", aria-controls="navbar")
+          span.sr-only Toggle navigation
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+        a.navbar-brand(href="#")
+            <img src="img/brand.png" width="22" height="22" alt="brand">
+
+      #navbar-inverse.collapse.navbar-collapse
+        ul.nav.navbar-nav
+          li.active
+            a( href="/") Select Grid by CS
+          li
+            a( href="/search") Search
+          li.dropdown
+            a.dropdown-toggle(href='#', data-toggle='dropdown')
+              | Twins
+              b.caret
+            ul.dropdown-menu
+              li
+                a(href='/twin') Reported
+              li
+                a(href='/tags') Tags
+              li
+                a(href='/edit') Edit Document                
+          li
+            a( href="/commands") Commands
+
+        ul.nav.navbar-nav.navbar-right
+          li.ph device id
+          form.navbar-form.navbar-left(action='/device', method='post', id='forma')
+            .form-group
+              input.form-control(type='text', name='devID', placeholder=deviceId)
+              button.btn.btn-space.btn-primary(type='submit', name="action", form='forma', value='register') connect
+
+
+    block content
+    .bluefooter
+      p.pf  #{footer}

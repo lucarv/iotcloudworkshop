@@ -54,6 +54,7 @@ function setDeviceCS(cs, deviceId, key) {
 
 var createSession = function () {
     var Device = utils.getDevice();
+    
     if (Device.client == null) {
         var client = clientFromConnectionString(Device.cs);
         utils.setClient(client);

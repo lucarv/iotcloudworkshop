@@ -1,0 +1,37 @@
+extends layout
+
+block content
+        .panel.panel-default
+            .panel-heading Edit Twin Document
+            .panel-body
+                form(id='formtwin', action='/edit', method='post')
+                    fieldset
+                        .form-group.row
+                            .col-sm-6
+                                label Connectivity Type
+                                .input-group
+                                    input.form-control(name="connType", type='text')
+                                    span.input-group-btn
+                                        button.btn.btn-primary(name="action", type='submit', form='formtwin', value='connType', placeholder=connType) submit
+                            .col-sm-6
+                                label Messaging Interval
+                                .input-group
+                                    input.form-control(name='interval', type='text')
+                                    span.input-group-btn
+                                        button.btn.btn-primary(name="action", type='submit', form='formtwin', value='interval', placeholder=interval) submit
+                        .form-group.row
+                            .col-sm-6
+                                label FW Version
+                                .input-group
+                                    input.form-control(name='fw_version', type='text')
+                                    span.input-group-btn
+                                        button.btn.btn-primary(name="action", type='submit', form='formtwin', value='fw_version', placeholder=version) submit
+                            .col-sm-6
+                                label Location
+                                .input-group
+                                    input.form-control(name='location', type='text')
+                                    span.input-group-btn
+                                        button.btn.btn-primary(name="action", type='submit', form='formtwin', value='location', placeholder=version) submit                                        
+
+
+

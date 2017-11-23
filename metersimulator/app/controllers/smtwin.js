@@ -5,11 +5,6 @@ var express = require('express'),
 var utils = require('../lib/utils');
 var devfunc = require('../lib/devfunc');
 
-
-var version = 'not set';
-var location = 'not set';
-var device, hubName, devCS;
-
 //middleware
 var bodyParser = require('body-parser');
 router.use(bodyParser.json());
@@ -21,122 +16,47 @@ var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConn
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 
-// routing 
+var des_interval = 'not checked', des_connType = 'not checkd', des_version = 'not checked', des_msgType = 'not checked';
+
+// ------------------------------------------------
+// ROUTES
+// ------------------------------------------------
 module.exports = function (app) {
     app.use('/', router);
 };
 
-router.get('/device', function (req, res, next) {
-    res.render('device', {
-        deviceId: utils.getDevice().id
-    });
-});
-
-router.post('/device', function (req, res, next) {
-    device = utils.getDevice();
-    hubName = device.cs.substring(device.cs.indexOf('=') + 1, device.cs.indexOf(';'));
-    devCS = 'HostName=' + hubName + ';DeviceId=' + device.id + ';SharedAccessKey=' + device.key;
-    switch (req.body.action) {
-        case 'activate':
-            // --------------------------------------
-            // task two:   
-            // register the direct methods defined in
-            // devfunc using the client
-            //---------------------------------------  
-
-            // YOUR CODE GOES HERE        
-
-            res.render('messaging', {
-                title: "smart meter simulator",
-                deviceId: utils.getDevice().id,
-                footer: 'starting listeners'
-            });
-            break;
-
-        case 'deactivate':
-            var client = clientFromConnectionString(devCS);
-            client.close(function (err) {
-                if (err) {
-                    console.log('Could not disconnect: ' + err);
-                } else {
-                    console.log('Client disconnected');
-                }
-            });
-            res.render('device', {
-                title: "smart meter simulator",
-                deviceId: utils.getDevice().id,
-                footer: 'closing connection to hub'
-            });
-            break;
-        default:
-            res.render('device', {
-                title: "smart meter simulator",
-                deviceId: utils.getDevice().id,
-                footer: 'cant get there form here'
-            });
-    }
-});
-
-
-router.get('/twin', function (req, res, next) {
-
-    var location = 'not yet set'
-    var version = 'not yet set'
-
-    var registry = iothub.Registry.fromConnectionString(utils.getDevice().cs);
-    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + utils.getDevice().id + '\'', 100);
-    query.nextAsTwin(function (err, prop) {
-        if (err)
-            console.error('Failed to fetch the results: ' + err.message);
-        else {
-            if (prop.length > 0) {
-                console.log(prop[0].tags.location)
-                console.log(prop[0].properties.reported)
-
-
-                if (prop[0].tags.location !== undefined)
-                    location = prop[0].tags.location.zipcode;
-                if (prop[0].properties.reported.fw_version !== undefined)
-                    version = prop[0].properties.reported.fw_version.version;
-
-            }
-
-        }
-        res.render('twin', {
-            title: "smart meter simulator",
-            footer: 'ready to manage device properties' + utils.getDevice().location + '/ ' + utils.getDevice().fw_version,
-            deviceId: utils.getDevice().id,
-            location: location,
-            fw_version: version
-        });
-    })
-
-
-});
+// ------------------------------------------------
+// REPORT PROPERTY CHANGE
+// ------------------------------------------------
 
 router.post('/twin', function (req, res, next) {
-    device = utils.getDevice();
-
+    var Device = utils.getDevice();
     switch (req.body.action) {
         case 'fw_version':
             devfunc.updateTwin('fw_version', req.body.fw_version);
-            device.fw_version = req.body.fw_version;
+            Device.fw_version = req.body.fw_version;
             break;
         case 'location':
             devfunc.updateTwin('location', req.body.location);
-            device.location = req.body.location;
+            Device.location = req.body.location;
             break;
         case 'connType':
             devfunc.updateTwin('connType', req.body.connType);
-            device.connType = req.body.connType;
+            Device.connType = req.body.connType;
             break;
     }
 
     res.render('twin', {
         title: "smart meter simulator",
-        deviceId: utils.getDevice().id,
-        footer: 'twin property updated',
-        location: location,
-        version: version
+        footer: 'ready to manage device properties',
+        deviceId: Device.id,
+        rep_interval: Device.interval,
+        rep_connType: Device.connType,
+        rep_version: Device.fw_version,
+        rep_msgType: Device.msgType,
+        des_interval: des_interval,
+        des_msgType: des_msgType,
+        des_connType: des_connType,
+        des_version: des_version
     });
 });
