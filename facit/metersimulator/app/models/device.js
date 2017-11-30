@@ -1,20 +1,19 @@
 // Example model
 
-
-function Device(hubcs, id, cs) {
-  this.id = id;
-  this.cs = cs;
-  this.hubcs = hubcs;
-  this.key = null;
+function Device() {
+  this.deviceId = null;
+  this.cs = null;
+  this.hubcs = null;
   this.appliances = [];
   this.location = 'not set';
   this.fw_version = 'not set';
   this.connType = 'not set';
-  this.interval = 60000;
-  this.client = null;
-  this.connectionState = null;
   this.msgType = 'not set';
+  this.interval = 60000;
+  this.regStatus = true;
+  this.client = null;
 }
+
 
 Device.prototype.getDeviceId = function () {
   return this.id
@@ -28,6 +27,10 @@ Device.prototype.setDeviceConnectionString = function (devcs) {
   this.devcs = devcs;
 }
 
+Device.prototype.setStatus = function (status) {
+  this.status = status;
+}
+
 Device.prototype.getDevConnectionString = function () {
   return this.devcs;
 }
@@ -38,10 +41,6 @@ Device.prototype.setAppliances = function (appl) {
 
 Device.prototype.getAppliances = function () {
   return this.appliances;
-}
-
-Device.prototype.setClient = function (client) {
-  this.client = client;
 }
 
 module.exports = Device;

@@ -33,7 +33,9 @@ body {
 .navbar-custom .navbar-brand {
     color:#eee;
 }
-
+.btn-default {
+    color: #17AEEB;
+}
 .btn-space {
     margin-right: 5px;
 }
