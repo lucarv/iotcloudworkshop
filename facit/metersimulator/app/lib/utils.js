@@ -3,15 +3,24 @@
 var Device = require('../models/device');
 var devfunc = require('./devfunc');
 var fs = require('fs');
+var client = null;
 
 var device;
-var applon = [];
+var appliances = [], applon = [];
 var pwr = 0;
 var exists = false;
-
-function getHubCS(cs) {
-    return Device.hubcs;
-}
+/*
+*
+* read the registered appliances for this house
+* set them all to false (off)
+*
+*/
+fs.readFile('./config/house.json', 'utf8', function (err, appl) {
+    if (err) {
+        console.log(err);
+    }
+    appliances = JSON.parse(appl)
+});
 
 function getExists(callback) {
     fs.readFile('./config/device.json', 'utf8', function (err, savedDevice) {
@@ -19,19 +28,19 @@ function getExists(callback) {
             return callback(err);
         }
         else {
-            if (savedDevice.length > 0) {
+            if (savedDevice.length > 0 && savedDevice !== 'undefined') {
                 // create model from file
                 var jsonDevice = JSON.parse(savedDevice);
                 device = new Device();
                 device.hubcs = jsonDevice.hubcs;
                 device.deviceId = jsonDevice.deviceId;
                 device.cs = jsonDevice.cs;
-                device.appliances = jsonDevice.appliances;
                 device.connType = jsonDevice.connType;
                 device.fw_version = jsonDevice.fw_version;
                 device.interval = jsonDevice.interval;
                 device.location = jsonDevice.location;
-                device.regStatus = "enabled";               
+                device.msgType = jsonDevice.msgType;
+                
                 return callback(null, device);
             }
             else {
@@ -44,19 +53,18 @@ function getExists(callback) {
 function getDevice() {
     return device;
 }
-    
-function setDevice(device, callback) {
-    // the code below should be elsewhere, in here due to laziness
-    // reading the apliances list from file when starting
-    fs.readFile('./config/appl.json', 'utf8', function (err, appl) {
-        if (err) {
-            return callback(err);
-        }
-        if (appl !== '')
-            return callback(null, JSON.parse(appl));
-        else
-            return callback(null, [])
-    });
+function setDevice(dev) {
+    device = dev;
+}
+function getClient() {
+    return client;
+}
+function setClient(cli) {
+    client = cli;
+}
+
+function initAppliances() {
+    return appliances;
 }
 
 function resetHouse() {
@@ -65,13 +73,11 @@ function resetHouse() {
 }
 
 function getAppliances() {
-    //return appliances  
-    return device.appliances;
+    return appliances 
 }
 
 function setAppliances(appl) {
-    device.appliances = appl;
-    fs.writeFile('./config/appl.json', JSON.stringify(appl), function (err) {
+    fs.writeFile('./config/house.json', JSON.stringify(appl), function (err) {
         if (err)
             return err;
     });
@@ -85,26 +91,28 @@ function setTelemetryValues(values) {
 }
 
 function persistDevice(device, callback) {
-    fs.writeFile('./config/device.json', JSON.stringify(device), function (err) {
-        if (err)
-            return callback(err);
-        else
-            return callback(null)
-    });
+    if (device) {
+        console.log('persisting device object')
+        console.log(device)
+        fs.writeFile('./config/device.json', JSON.stringify(device), function (err) {
+            if (err)
+                return callback(err);
+            else
+                return callback(null)
+        });
+    }
+    else
+        return callback(null)
 }
-
 
 function getConsumption() {
     pwr = 0;
-    // resetHouse();
-
-    for (var i = 0; i < device.appliances.length; i++) {
-        if (device.appliances[i].state == 'on') {
-            pwr += Number(device.appliances[i].kwm);
-            //applon.push(device.appliances[i].name)
+    for (var i = 0; i < appliances.length; i++) {
+        if (appliances[i].state) {
+            pwr += Number(appliances[i].kwm);
+            applon.push(appliances[i].name)
         }
     }
-
     var reading = { "pwr": pwr, "appls": applon };
     return reading;
 }
@@ -113,12 +121,17 @@ module.exports.setTelemetryValues = setTelemetryValues;
 module.exports.getConsumption = getConsumption;
 module.exports.getAppliances = getAppliances;
 module.exports.setAppliances = setAppliances;
+module.exports.initAppliances = initAppliances;
+
 module.exports.resetHouse = resetHouse;
 
 module.exports.persistDevice = persistDevice;
 module.exports.getExists = getExists;
 module.exports.setDevice = setDevice;
 module.exports.getDevice = getDevice;
+module.exports.setClient = setClient;
+module.exports.getClient = getClient;
+
 
 
 

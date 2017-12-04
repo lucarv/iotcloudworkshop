@@ -8,30 +8,26 @@ block content
                     fieldset
                         .form-group.row
                             .col-sm-6
-                                label Connectivity Type
                                 .input-group
-                                    input.form-control(name="connType", type='text')
+                                    input.form-control(name="connType", type='text', placeholder='connectivity type')
                                     span.input-group-btn
                                         button.btn.btn-primary(name="action", type='submit', form='formtwin', value='connType', placeholder=connType) submit
                             .col-sm-6
-                                label Messaging Interval
                                 .input-group
-                                    input.form-control(name='interval', type='text')
+                                    input.form-control(name='interval', type='text', placeholder='telemetry interval')
                                     span.input-group-btn
                                         button.btn.btn-primary(name="action", type='submit', form='formtwin', value='interval', placeholder=interval) submit
                         .form-group.row
                             .col-sm-6
-                                label FW Version
                                 .input-group
-                                    input.form-control(name='fw_version', type='text')
+                                    input.form-control(name='fw_version', type='text', placeholder='fw version')
                                     span.input-group-btn
                                         button.btn.btn-primary(name="action", type='submit', form='formtwin', value='fw_version', placeholder=version) submit
                             .col-sm-6
-                                label Location
                                 .input-group
-                                    input.form-control(name='location', type='text')
+                                    input.form-control(name='msgType', type='text', placeholder='messaging type')
                                     span.input-group-btn
-                                        button.btn.btn-primary(name="action", type='submit', form='formtwin', value='location', placeholder=version) submit                                        
+                                        button.btn.btn-primary(name="action", type='submit', form='formtwin', value='msgType', placeholder=version) submit                                        
 
 
 

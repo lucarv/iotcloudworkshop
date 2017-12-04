@@ -36,9 +36,9 @@ html(lang='en')
           li 
             a( href="/status") status                                    
           li 
-            a( href="/telemetry") telemetry
+            a( href="/telemetry") d2c
           li 
-            a( href="/c2d") messages
+            a( href="/c2d") c2d
           li.dropdown
             a.dropdown-toggle(href='#', data-toggle='dropdown')
               | twin
@@ -48,6 +48,12 @@ html(lang='en')
                 a(href='/properties') properties
               li
                 a(href='/tags') tags
+
+        ul.nav.navbar-nav.navbar-right 
+          li.ph device id
+          form.navbar-form.navbar-left(role='search')
+            .form-group
+              input.form-control(type='text', placeholder=deviceId)  
           li.dropdown
             a.dropdown-toggle(href='#', data-toggle='dropdown')
               | appliances
@@ -56,13 +62,7 @@ html(lang='en')
               li
                 a(href='/appliances') manage
               li
-                a(href='/house') toggle on
-                off
-        ul.nav.navbar-nav.navbar-right 
-          li.ph device id
-          form.navbar-form.navbar-left(role='search')
-            .form-group
-              input.form-control(type='text', placeholder=deviceId)           
+                a(href='/house') toggle on/off         
 
     block content
     .bluefooter

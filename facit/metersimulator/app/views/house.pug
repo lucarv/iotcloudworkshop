@@ -6,12 +6,12 @@ block content
             .panel-body  
                 form(action='/house', method='post', id='formb')
                     fieldset
-                        table.table.table-bordered
+                        table.table
                             thead
                             tr
                                 th Appliance
                                 th Consumption (watts/min)
-                                th State  
+                                th On?  
                                 th Toggle                                                                       
                             tbody
                             each appl in appls
@@ -22,7 +22,6 @@ block content
                                 td 
                                     .checkbox                        
                                         input(type='checkbox', name=appl.name) 
-            .panel-body
                 button.btn.btn-space.btn-primary(type='submit', form='formb') apply                                    
 
 

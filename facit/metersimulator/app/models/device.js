@@ -8,10 +8,9 @@ function Device() {
   this.location = 'not set';
   this.fw_version = 'not set';
   this.connType = 'not set';
-  this.msgType = 'not set';
+  this.msgType = 'stream';
   this.interval = 60000;
   this.regStatus = true;
-  this.client = null;
 }
 
 

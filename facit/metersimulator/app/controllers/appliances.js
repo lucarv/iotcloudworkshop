@@ -35,10 +35,7 @@ router.post('/house', function (req, res, next) {
     for (var i = 0; i < appliancesArray.length; i++) {
         for (var j = 0; j < keys.length; j++) {
             if (appliancesArray[i].name == keys[j]) {
-                if (appliancesArray[i].state == 'on')
-                    appliancesArray[i].state = 'off'
-                else
-                    appliancesArray[i].state = 'on'
+                    appliancesArray[i].state = !appliancesArray[i].state;
             }
         }
     }
@@ -46,10 +43,11 @@ router.post('/house', function (req, res, next) {
     var pwr = utils.getConsumption().pwr;
     var msg = 'consumption per minute: ' + pwr + ' watts/min'
 
-    res.render('appreg', {
+    res.render('house', {
         title: "smart meter simulator",
         footer: msg,
-        appls: appliancesArray
+        appls: appliancesArray,
+        deviceId: utils.getDevice().id
     });
 });
 
@@ -67,11 +65,10 @@ router.post('/appliances', function (req, res, next) {
     var applObj = {};
     applObj.name = req.body.name;
     applObj.kwm = req.body.kwm;
-    applObj.state = 'off';
+    applObj.state = false;
     var appliancesArray = utils.getAppliances();
 
     appliancesArray.push(applObj);
-
     utils.setAppliances(appliancesArray);
     
     res.render('appreg', {

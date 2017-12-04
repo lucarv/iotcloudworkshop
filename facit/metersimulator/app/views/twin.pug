@@ -10,8 +10,8 @@ block content
                 thead
                     tr
                     th Property Name
-                    th Reported
-                    th Desired
+                    th Local (Reported)
+                    th Cloud (Desired)
                 tbody
                     tr
                     td FW version
@@ -29,10 +29,14 @@ block content
                     td Connectivity Type
                     td #{rep_connType}                
                     td #{des_connType}   
+            hr
+            form(action='/twin', method='post')
+                button.btn.btn-primary(type='submit', name='action', value='current') report current
+        
     .panel.panel-default
         .panel-heading Report
         .panel-body   
-            form(id='formtwin', action='/twin', method='post')
+            form(action='/twin', method='post')
                 fieldset
                     .form-group.row
                         .col-sm-2
@@ -42,7 +46,15 @@ block content
                                     option(value='cellular') cellular
                                     option(value='wifi') wifi
                                     option(value='fixed') fixed 
-                        .col-sm-2                                 
-                            button.btn.btn-primary(name="action", type='submit', form='formtwin', value='connType') update 
-            br
-            p * to change the telemetry parameters go to the telemetry panel        
+                        .col-sm-3
+                            input.form-control(type='text', name='interval', placeholder='telemetry interval: ' + rep_interval) 
+                        .col-sm-3
+                            input.form-control(type='text', name='fw_version', placeholder='fw version: ' + rep_version) 
+                        .col-sm-3
+                            .input-group
+                            select#form.form-control(name = "msgType")
+                                option(value='') messaging type
+                                option(value='stream') stream    
+                                option(value='delta') delta 
+                        .col-sm-1                                 
+                            button.btn.btn-primary(type='submit') update 

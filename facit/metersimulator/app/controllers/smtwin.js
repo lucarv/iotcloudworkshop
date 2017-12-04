@@ -16,7 +16,7 @@ var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConn
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 
-var des_interval = 'not checked', des_connType = 'not checkd', des_version = 'not checked', des_msgType = 'not checked';
+var des_interval = 'not checked', des_connType = 'not checked', des_version = 'not checked', des_msgType = 'not checked';
 
 // routing 
 module.exports = function (app) {
@@ -30,8 +30,8 @@ router.get('/device', function (req, res, next) {
 });
 
 router.post('/device', function (req, res, next) {
-    var Device = utils.getDevice();
-    cd = Device.cs;
+    var device = utils.getDevice();
+    cd = device.cs;
     switch (req.body.action) {
         case 'activate':
             var client = clientFromConnectionString(cs);
@@ -46,7 +46,7 @@ router.post('/device', function (req, res, next) {
             });
             res.render('messaging', {
                 title: "smart meter simulator",
-                deviceId: utils.getDevice().id,
+                deviceId: device.id,
                 footer: 'starting listeners'
             });
             break;
@@ -62,24 +62,24 @@ router.post('/device', function (req, res, next) {
             });
             res.render('device', {
                 title: "smart meter simulator",
-                deviceId: utils.getDevice().id,
+                deviceId: device.id,
                 footer: 'closing connection to hub'
             });
             break;
         default:
             res.render('device', {
                 title: "smart meter simulator",
-                deviceId: utils.getDevice().id,
+                deviceId: device.id,
                 footer: 'cant get there form here'
             });
     }
 });
 
 router.get('/properties', function (req, res, next) {
-    var Device = utils.getDevice();
+    var device = utils.getDevice();
 
-    var registry = iothub.Registry.fromConnectionString(Device.hubcs);
-    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + Device.id + '\'', 100);
+    var registry = iothub.Registry.fromConnectionString(device.hubcs);
+    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + device.id + '\'', 100);
     query.nextAsTwin(function (err, prop) {
         if (err)
             console.error('Failed to fetch the results: ' + err.message);
@@ -109,11 +109,11 @@ router.get('/properties', function (req, res, next) {
         res.render('twin', {
             title: "smart meter simulator",
             footer: 'ready to manage device properties',
-            deviceId: Device.id,
-            rep_interval: Device.interval,
-            rep_connType: Device.connType,
-            rep_version: Device.fw_version,
-            rep_msgType: Device.msgType,
+            deviceId: device.id,
+            rep_interval: device.interval,
+            rep_connType: device.connType,
+            rep_version: device.fw_version,
+            rep_msgType: device.msgType,
             des_interval: des_interval,
             des_msgType: des_msgType,
             des_connType: des_connType,
@@ -123,10 +123,10 @@ router.get('/properties', function (req, res, next) {
 });
 
 router.get('/tags', function (req, res, next) {
-    var Device = utils.getDevice();
+    var device = utils.getDevice();
 
-    var registry = iothub.Registry.fromConnectionString(Device.hubcs);
-    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + Device.id + '\'', 100);
+    var registry = iothub.Registry.fromConnectionString(device.hubcs);
+    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + device.id + '\'', 100);
     query.nextAsTwin(function (err, prop) {
         if (err)
             console.error('Failed to fetch the results: ' + err.message);
@@ -141,38 +141,48 @@ router.get('/tags', function (req, res, next) {
         res.render('tags', {
             title: "smart meter simulator",
             footer: 'ready to manage device properties',
-            deviceId: Device.id,
-            location: Device.location
+            deviceId: device.id,
+            location: device.location
         });
     })
 });
 
 router.post('/twin', function (req, res, next) {
-    var Device = utils.getDevice();
-    // bad code below, upodating the model from here. FIX IT
-    switch (req.body.action) {
-        case 'fw_version':
-            devfunc.updateTwin('fw_version', req.body.fw_version);
-            Device.fw_version = req.body.fw_version;
-            break;
-        case 'location':
-            devfunc.updateTwin('location', req.body.location);
-            Device.location = req.body.location;
-            break;
-        case 'connType':
+    var device = utils.getDevice();
+
+    if (req.body.action == 'current') {
+        console.log('reporting current device.connType: ' + device.connType)
+        console.log('reporting current device.interval: ' + device.interval)
+        console.log('reporting current device.msgType: ' + device.msgType)
+        devfunc.updateTwin('connType', device.connType);
+        devfunc.updateTwin('interval', device.interval);
+        devfunc.updateTwin('msgType', device.msgType);
+    }
+    else {
+        if (req.body.connType !== "") {
             devfunc.updateTwin('connType', req.body.connType);
-            Device.connType = req.body.connType;
-            break;
+            device.connType = req.body.connType;
+        }
+
+        if (req.body.interval !== "") {
+            devfunc.updateTwin('interval', req.body.interval);
+            device.interval = req.body.interval;
+        }
+
+        if (req.body.msgType !== "") {
+            devfunc.updateTwin('msgType', req.body.msgType);
+            device.msgType = req.body.msgType;
+        }
     }
 
     res.render('twin', {
         title: "smart meter simulator",
         footer: 'ready to manage device properties',
-        deviceId: Device.id,
-        rep_interval: Device.interval,
-        rep_connType: Device.connType,
-        rep_version: Device.fw_version,
-        rep_msgType: Device.msgType,
+        deviceId: device.id,
+        rep_interval: device.interval,
+        rep_connType: device.connType,
+        rep_version: device.fw_version,
+        rep_msgType: device.msgType,
         des_interval: des_interval,
         des_msgType: des_msgType,
         des_connType: des_connType,

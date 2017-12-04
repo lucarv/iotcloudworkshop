@@ -50,13 +50,11 @@ var onBlock = function (request, response) {
 };
 
 var onRelease = function (request, response) {
-
     // do something here
     console.log('releasing...')
 }
 // twin properties
 var updateTwin = function (property, value) {
-    device = utils.getDevice();
     switch (property) {
         case 'appl':
             var appArray = utils.getAppliances()
@@ -80,9 +78,11 @@ var updateTwin = function (property, value) {
         case 'msgType':
             var patch = {
                 telemetry: {
-                    type: value
+                    msgType: value
                 }
             };
+            console.log(patch)
+            
             writeProp(patch);
             break;
         case 'connType':
@@ -97,11 +97,15 @@ var updateTwin = function (property, value) {
 }
 
 var writeProp = function (patch) {
-    device.client.getTwin(function (err, twin) {
+    utils.getClient().getTwin(function (err, twin) {
         if (err)  // ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
             msg = 'could not get twin: ' + JSON.stringify(err);
         else {
             twin.properties.reported.update(patch, function (err) {
+                if (err)
+                    console.log(err)
+                else
+                    console.log('updated: ' + JSON.stringify(patch));
                 // for the moment just assume it will work
             });
         }

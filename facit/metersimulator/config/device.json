@@ -1,74 +1,70 @@
 {
-    "deviceId": "FF001",
-    "cs": "HostName=luca-test-hub.azure-devices.net;DeviceId=FF001;SharedAccessKey=a+6C3n3R2NRSFbb7YBF6xeHkSiI1AV3Er1EvhI0DW6U=",
-    "hubcs": "HostName=luca-test-hub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=3yeiWmklIXbTUEwEDsheY+v6c1ZP7dk5fz9SKIqm36M=",
+    "deviceId": "cws_dev_001",
+    "cs": "HostName=lucacws-hub.azure-devices.net;DeviceId=cws_dev_001;SharedAccessKey=18CBjRNWblV5q+nTi5rW2GcLCduWBMKReCZ1wtFd7kA=",
+    "hubcs": "HostName=lucacws-hub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=rZRPcHsHbVNvMzA98xMt3/JXfgXMc84VUoEITww+2Po=",
     "appliances": [
-        {
-            "name": "pc",
-            "kwm": "1",
-            "state": "off"
-        },
         {
             "name": "tv",
             "kwm": "2",
-            "state": "off"
-        },
-        {
-            "name": "fridge",
-            "kwm": "14",
-            "state": "on"
-        },
-        {
-            "name": "freezer",
-            "kwm": "12.5",
-            "state": "off"
-        },
-        {
-            "name": "kettle",
-            "kwm": "6",
-            "state": "off"
-        },
-        {
-            "name": "stove",
-            "kwm": "9",
-            "state": "off"
-        },
-        {
-            "name": "oven",
-            "kwm": "30",
-            "state": "on"
-        },
-        {
-            "name": "microwave",
-            "kwm": "5",
-            "state": "on"
-        },
-        {
-            "name": "shiatsu_pillow",
-            "kwm": "4",
-            "state": "off"
+            "state": true
         },
         {
             "name": "stereo",
-            "kwm": "10",
-            "state": "on"
+            "kwm": "4",
+            "state": true
         },
         {
-            "name": "lights_living",
+            "name": "fridge",
+            "kwm": "7.5",
+            "state": true
+        },
+        {
+            "name": "freezer",
+            "kwm": "6.3",
+            "state": true
+        },
+        {
+            "name": "boiler",
+            "kwm": "5.1",
+            "state": true
+        },
+        {
+            "name": "microwave oven",
+            "kwm": "3.9",
+            "state": true
+        },
+        {
+            "name": "aircon",
+            "kwm": "12",
+            "state": false
+        },
+        {
+            "name": "lights kitchen",
             "kwm": "1",
-            "state": "off"
+            "state": false
         },
         {
-            "name": "lights_kitchen",
-            "kwm": "2",
-            "state": "on"
+            "name": "lights bedroom",
+            "kwm": "1.2",
+            "state": true
+        },
+        {
+            "name": "stove",
+            "kwm": "7.1",
+            "state": false
+        },
+        {
+            "name": "power hungry dev",
+            "kwm": "80",
+            "state": false
         }
     ],
     "location": "not set",
     "fw_version": "not set",
     "connType": "not set",
-    "msgType": "stream",
-    "interval": 60000,
-    "regStatus": "active",
-    "hubName": "luca-test-hub.azure-devices.net"
+    "msgType": "delta",
+    "interval": "5000",
+    "regStatus": true,
+    "hubName": "lucacws-hub.azure-devices.net",
+    "telemetry": false
 }
