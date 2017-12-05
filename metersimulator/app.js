@@ -7,10 +7,30 @@ ON_DEATH(function(signal, err) {
 })
 */
 //on windows
+
 process.on('SIGINT', function () {
-  utils.persistDevice();
-  console.log('shutting down. clean up')
-})
+  console.log('trying shutting down. clean up...')
+
+  // save device state
+  utils.persistDevice(utils.getDevice(), function (err) {
+    if (err)
+      console.log('could not persist device state')
+    else {
+      console.log('device state persisted')
+      // close open ports
+      server.close(function (err) {
+        if (err) {
+          console.log(err);
+          console.log('not able to shutdown gracefully');
+        }
+        else {
+          console.log('all connections terminated');
+        }
+      });
+    }
+  });
+});
+
 
 var express = require('express'),
   config = require('./config/config');
@@ -18,8 +38,21 @@ var express = require('express'),
 var app = express();
 
 module.exports = require('./config/express')(app, config);
+var port = config.port;
+var myArgs = process.argv.slice(2);
+if (myArgs[0] == 'clean') {
+  utils.persistDevice(undefined, function (err) {
+    if (err)
+      console.log(err)
+  })
+}
+else {
+  if (!isNaN(myArgs[0]))
+    port = myArgs[0]
+}
 
-app.listen(config.port, function () {
-  console.log('Express server listening on port ' + config.port);
+var server = app.listen(port, function () {
+  console.log('Express server listening on port ' + port);
 });
+
 

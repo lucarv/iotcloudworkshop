@@ -7,11 +7,44 @@ var iothub = require('azure-iothub');
 var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
-var Device;
+var device;
 var openConn = false;
 
 // direct methods
 var onBlock = function (request, response) {
+    var client = clientFromConnectionString(utils.getDevice().cs);
+    // Respond the cloud app for the direct method
+    response.send(200, 'Electricity supply is now blocked', function (err) {
+        if (!err) {
+            console.error('An error occured when sending a method response:\n' + err.toString());
+        } else {
+            console.log('Response to method \'' + request.methodName + '\' sent successfully.');
+        }
+    });
+
+    // Report the block 
+    var date = new Date();
+    var patch = {
+        iothubDM: {
+            block: {
+                lastBlock: date.toISOString(),
+            }
+        }
+    };
+
+    // Get device Twin
+    client.getTwin(function (err, twin) {
+        if (err) {
+            console.error('could not get twin: ' + JSON.stringify(err));
+        } else {
+            console.log('twin acquired');
+            twin.properties.reported.update(patch, function (err) {
+                if (err) throw err;
+                console.log('Device twin state reported')
+            });
+        }
+    });
+
     // Block API for physical restart.
     console.log('Blocking!');
 };
@@ -22,7 +55,6 @@ var onRelease = function (request, response) {
 }
 // twin properties
 var updateTwin = function (property, value) {
-    Device = utils.getDevice();
     switch (property) {
         case 'appl':
             var appArray = utils.getAppliances()
@@ -46,9 +78,11 @@ var updateTwin = function (property, value) {
         case 'msgType':
             var patch = {
                 telemetry: {
-                    type: value
+                    msgType: value
                 }
             };
+            console.log(patch)
+            
             writeProp(patch);
             break;
         case 'connType':
@@ -62,14 +96,20 @@ var updateTwin = function (property, value) {
     }
 }
 
-
-
 var writeProp = function (patch) {
-
-    // STEP 7
-    // WRITE COE HERE TO UPDATE THE REPORTED PROPERTIES
-    // NOTE: YOU ALREADY HAVE AN MQTT CLIENT CONNECTED, USE THE OBJECT STORED IN THE MODEL
-
+    utils.getClient().getTwin(function (err, twin) {
+        if (err)  // ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
+            msg = 'could not get twin: ' + JSON.stringify(err);
+        else {
+            twin.properties.reported.update(patch, function (err) {
+                if (err)
+                    console.log(err)
+                else
+                    console.log('updated: ' + JSON.stringify(patch));
+                // for the moment just assume it will work
+            });
+        }
+    });
 }
 
 module.exports.onBlock = onBlock;

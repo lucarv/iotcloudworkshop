@@ -2,14 +2,13 @@ extends layout
 
 block content
   .panel.panel-default
-    .panel-heading Device Reported Properties
+    .panel-heading Device Tags
     .panel-body
-        table.table.table-hover
-            thead
-                tr
-                th Tag Name
-                th Value
-            tbody
-                tr
-                td Location
-                td #{location}
+        form(action='/tags', method='post')
+            fieldset
+                .form-group.row
+                    .col-sm-6
+                        input.form-control(name="location", type='text', placeholder='device zipcode: ' + location)
+                    .col-sm-1
+                        button.btn.btn-primary(type='submit', value='location') submit
+                        

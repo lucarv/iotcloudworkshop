@@ -32,16 +32,13 @@ html(lang='en')
       #navbar-inverse.collapse.navbar-collapse
         ul.nav.navbar-nav
           li 
-            a( href="/", data-tooltip='register device' ) register
-          // li REMOVE THIS FROM THE MENU AS NOT NEEDED IN THE LAB
-            a( href="/device", data-tooltip='control device' ) 
-              span.glyphicon.glyphicon-modal-window                                          
+            a( href="/") register     
           li 
-            a( href="/msg", data-tooltip='telemetry' ) telemetry
-              //span.glyphicon.glyphicon-send   
+            a( href="/status") status                                    
           li 
-            a( href="/c2d", data-tooltip='message box' ) messages
-            /// span.glyphicon.glyphicon-envelope
+            a( href="/telemetry") d2c
+          li 
+            a( href="/c2d") c2d
           li.dropdown
             a.dropdown-toggle(href='#', data-toggle='dropdown')
               | twin
@@ -51,21 +48,23 @@ html(lang='en')
                 a(href='/properties') properties
               li
                 a(href='/tags') tags
-     
 
-        ul.nav.navbar-nav.navbar-right      
+        ul.nav.navbar-nav.navbar-right 
           li.ph device id
           form.navbar-form.navbar-left(role='search')
             .form-group
-              input.form-control(type='text', placeholder=deviceId)           
-          li 
-            a( href="/appliances", data-tooltip='register appliances' ) 
-              span.glyphicon.glyphicon-plus          
-          li 
-            a( href="/house", data-tooltip='turn on/off appliances' ) 
-              span.glyphicon.glyphicon-off   
-
+              input.form-control(type='text', placeholder=deviceId)  
+          li.dropdown
+            a.dropdown-toggle(href='#', data-toggle='dropdown')
+              | appliances
+              b.caret
+            ul.dropdown-menu
+              li
+                a(href='/appliances') manage
+              li
+                a(href='/house') toggle on/off         
 
     block content
     .bluefooter
       p.pf  #{footer}
+

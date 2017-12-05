@@ -1,0 +1,13 @@
+extends layout
+block content
+    .panel.panel-default
+        .panel-heading Device Registry Status
+        .panel-body        
+            form(action='/status', method='post')
+                fieldset
+                    .form-group.row
+                        .col-sm-4
+                            .input-group
+                                input.form-control(type='text', placeholder=status readonly)
+                                span.input-group-btn
+                                    button.btn.btn-primary(type='submit') toggle

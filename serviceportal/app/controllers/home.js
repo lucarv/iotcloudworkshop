@@ -17,6 +17,7 @@ var location = 'not yet set',
   connType = 'not yet reported',
   fw_version = 'not yet set',
   interval = 'not yet reported',
+  msgType = 'not yet reported',
   lastRead,
   msg;
 
@@ -119,6 +120,13 @@ function getReportedProperties(res, next) {
         interval = twin.properties.reported.interval.ms;
       }
     }
+    if (twin.properties.reported.telemetry != null) {
+      if (err) {
+        msg = 'Could not query twins: ' + err.constructor.name + ': ' + err.message;
+      } else {
+        msgType = twin.properties.reported.telemetry.msgType;
+      }
+    }
     if (twin.properties.reported.hasOwnProperty('connectivity')) {
       if (err) {
         msg = 'Could not query twins: ' + err.constructor.name + ': ' + err.message;
@@ -134,6 +142,7 @@ function getReportedProperties(res, next) {
       version: fw_version,
       interval: interval,
       connType: connType,
+      msgType: msgType,
       footer: 'reported properties'
     });
   });
@@ -149,9 +158,11 @@ function setDesiredProperty(res, next, choice, prop) {
         case 'fw':
           var patch = { properties: { desired: { fw: { version: prop } } } };
           break;
-
         case 'interval':
           var patch = { properties: { desired: { interval: { ms: prop } } } };
+          break;
+        case 'msgType':
+          var patch = { properties: { desired: { telemetry: { msgType: prop } } } };
           break;
       }
       twin.update(patch, function (err) {
@@ -223,10 +234,49 @@ router.get('/tags', function (req, res, next) {
 
         res.render('tags', {
           title: 'utility mgmt console',
-          location: location
+          deviceId: deviceId,
+          location: location,
+          footer: msg
         });
       }
     });
+});
+
+router.post('/tags', function (req, res, next) {
+  registry.getTwin(deviceId, function (err, twin) {
+    if (err) {
+      msg = err.constructor.name + ': ' + err.message;
+    }
+    else {
+      registry.getTwin(deviceId, function (err, twin) {
+        if (err) {
+          console.error(err.constructor.name + ': ' + err.message);
+        }
+        else {
+          var patch = {
+            tags: {
+              location: {
+                zipcode: req.body.location
+              }
+            }
+          };
+          twin.update(patch, function (err) {
+            if (err) {
+              msg = 'Could not update twin: ' + err.constructor.name + ': ' + err.message;
+            } else {
+              msg = twin.deviceId + ' twin updated successfully';
+            }
+          });
+        }
+      });
+    }
+  });
+  res.render('tags', {
+    title: 'utility mgmt console',
+    deviceId: deviceId,
+    location: req.body.location,
+    footer: msg
+  });
 });
 
 router.get('/edit', function (req, res, next) {
@@ -243,8 +293,10 @@ router.post('/edit', function (req, res, next) {
       break;
     case 'connType':
       setDesiredProperty(res, next, 'conType', req.body.connType)
-      break;      
-
+      break;
+    case 'msgType':
+      setDesiredProperty(res, next, 'msgType', req.body.msgType)
+      break;
   }
 });
 
@@ -255,6 +307,7 @@ router.get('/twin', function (req, res, next) {
   else
     res.render('twin', {
       title: 'utility mgmt console',
+      deviceId: deviceId,
       footer: 'no device selected'
     });
 });
