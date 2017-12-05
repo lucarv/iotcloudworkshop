@@ -12,12 +12,12 @@ var bodyParser = require('body-parser');
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
 
-// azure sdk
-var iothub = require('azure-iothub');
-var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
-var Message = require('azure-iot-device').Message;
-var Client = require('azure-iot-device').Client;
-var Protocol = require('azure-iot-device-mqtt').Mqtt;
+// azure sdk - ADD THE PROPER LIBRARIES
+var iothub = XXXXXXXXX;
+var clientFromConnectionString = XXXXXXXXX;
+var Message = XXXXXXXXXXXXXX;
+var Client = XXXXXXXXXXXXX;
+var Protocol = XXXXXXX MQTT XXXXXXX;
 var desiredVersion = null;
 var registry, client;
 
@@ -43,17 +43,25 @@ function initDevice(cs, did, key) {
 function createSession(callback) {
     client = clientFromConnectionString(device.cs);
     utils.setClient(client);
-    client.open(function (err) {
+    /*
+    *
+    * 1. open an MQTT session (look for the XXXX)
+    * 2. create entry points for twin messages
+    * 3. create entry points for d2c messages
+    *
+    */
+
+    client.XXXXXXXX {
         if (err) { //something really fishy, report and leave the flow
             callback(err);
         } else {
             // subscribed to property changes
             // ARCH NOTE: move this outside of this loop
-            client.getTwin(function (err, twin) { // check if he telemetry interval has ben set by the operator    
+            client.XXXXXXXXXXX { // check if he telemetry interval has ben set by the operator    
                 if (err) {
                     callback(err);
                 } else {
-                    twin.on('properties.desired', function (desiredChange) {
+                    twin.XXXXXXXXXX(XXXXXXXXXX, function (desiredChange) {
                         console.log('desired property change')
                         if (twin.properties.desired.$version !== desiredVersion) {
                             desiredVersion = twin.properties.desired.$version;
@@ -63,7 +71,7 @@ function createSession(callback) {
                                 devfunc.updateTwin('interval', device.interval);
                             }
                             if (desiredChange.hasOwnProperty('telemetry')) {
-                                console.log(desiredChange)
+                                console.log(desiredChane)
                                 device.msgType = desiredChange.telemetry.msgType
                                 devfunc.updateTwin('msgType', device.msgType);
                             }
@@ -78,10 +86,10 @@ function createSession(callback) {
                 }
             });
             // ARCH NOTE: read last received message -> move this outside this loop
-            client.on('message', function (msg) {
+            client.XXXXXXXXX(XXXXXXXXXXX, function (msg) {
                 c2dmsg = ('Id: ' + msg.messageId + ' Body: ' + msg.data);
                 console.log(c2dmsg)
-                client.complete(msg, function(err){
+                client.XXXXXXXXXXX(XXXXXXXXXXXXX, function(err){
                     console.log(err)
                 });
             });
@@ -129,13 +137,18 @@ router.get('/', function (req, res, next) {
     });
 });
 
+/*
+*
+* 4. Register a device using the data entered in the UI
+*
+*/
 router.post('/', function (req, res, next) {
     switch (req.body.action) {
         case 'register':
             var hubcs = req.body.cs;
             var did = req.body.devID;
 
-            registry = iothub.Registry.fromConnectionString(hubcs);
+            registry = XXXXXXXXXXXX;
             registry.create({ deviceId: did }, function (err, deviceInfo, result) {
                 if (err) { // error registering to hub
                     registry.get(did, function (err, deviceInfo, res) {

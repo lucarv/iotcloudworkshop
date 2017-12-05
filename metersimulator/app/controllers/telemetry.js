@@ -22,6 +22,11 @@ var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var desiredVersion = null;
 var registry, client;
 
+/*
+*
+* 6. Compose the message and send it to IoT Hub
+*
+*/
 var startTelemetry = function () {
     var client = utils.getClient();
     device.telemetry = true;
@@ -40,17 +45,21 @@ var startTelemetry = function () {
             consumption: reading.pwr,
             appliances: reading.applon
         });
-        var message = new Message(data);
+        var message = XXXXXXXXXX;
 
         //akert for high consumption
+        /*
+        * 7. Add a property to the message for high consumption
+        *
+        */
         if (reading.pwr > 100) {
-            message.properties.add('usagealert', 'true');
+            message.XXXXXXXXXX
         }
 
         if (device.msgType === 'delta' && reading.pwr == lastMeterReading)
             console.log('skip messaging as no changes');
         else
-            client.sendEvent(message, function (err, res) {
+            client.XXXXXXXX(XXXXXX, function (err, res) {
                 if (err)
                     console.log('Message sending error: ' + err.toString());
                 else

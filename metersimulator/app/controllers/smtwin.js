@@ -122,12 +122,17 @@ router.get('/properties', function (req, res, next) {
     })
 });
 
+/*
+*
+* 8. Read the twin document
+*
+*/
 router.get('/tags', function (req, res, next) {
     var device = utils.getDevice();
 
-    var registry = iothub.Registry.fromConnectionString(device.hubcs);
-    var query = registry.createQuery("SELECT * FROM devices WHERE deviceId = '" + device.id + '\'', 100);
-    query.nextAsTwin(function (err, prop) {
+    var registry = XXXXXXXXXXXXXXX;
+    var query = registry.XXXXXXX(XXXXXXXXXXXXXXX);
+    query.XXXXXXXX(XXXXXXXXXX) {
         if (err)
             console.error('Failed to fetch the results: ' + err.message);
         else {
