@@ -67,7 +67,7 @@ module.exports = function (app) {
 };
 
 router.get('/', function (req, res, next) {
-    utils.getExists(function (err, dev) {
+    utils.readFromConfig(function (err, dev) {
         if (!dev) {
             request('http://localhost:3000', function (error, response, body) {
                 customerList = JSON.parse(body).customerList;

@@ -15,7 +15,7 @@ var appliances = [], applon = [];
 var pwr = 0;
 var exists = false;
 
-function getExists(callback) {
+function readFromConfig(callback) {
 
     if (thisDevice !== null) {
         // create model from file
@@ -123,7 +123,7 @@ module.exports.initAppliances = initAppliances;
 module.exports.resetHouse = resetHouse;
 
 module.exports.persistDevice = persistDevice;
-module.exports.getExists = getExists;
+module.exports.readFromConfig = readFromConfig;
 module.exports.regDevice = regDevice;
 
 module.exports.setDevice = setDevice;
