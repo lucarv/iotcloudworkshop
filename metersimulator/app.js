@@ -5,7 +5,7 @@ var ON_DEATH = require('death');
 ON_DEATH(function(signal, err) {
   console.log(signal)
 })
-*/
+
 //on windows
 
 process.on('SIGINT', function () {
@@ -31,7 +31,7 @@ process.on('SIGINT', function () {
   });
 });
 
-
+*/
 var express = require('express'),
   config = require('./config/config');
 

@@ -1,0 +1,13 @@
+{
+    "deviceId": "testdev-001",
+    "cs": "HostName=luca-cws-iothub.azure-devices.net;DeviceId=testdev-001;SharedAccessKey=7rbHJvOrjS3tjmghgjUYDwYXEpDc4jtXonJ6UXtkkgU=",
+    "appliances": [],
+    "active": false,
+    "telemetry": {
+        "frequency": 30000,
+        "type": "delta"
+    },
+    "messaging": "off",
+    "connType": "not set",
+    "fw": "not set"
+}

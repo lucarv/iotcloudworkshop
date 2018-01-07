@@ -3,19 +3,34 @@ var utils = require('./utils');
 var msg = '';
 
 // azure sdk
-var iothub = require('azure-iothub');
 var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
 var Client = require('azure-iot-device').Client;
-var Protocol = require('azure-iot-device-mqtt').Mqtt;
-var device;
-var openConn = false;
 
-// direct methods
+/*
+register listeners to direct methods
+*/
+function initDM(client, callback) {
+    client.onDeviceMethod('writeLine', onWriteLine);
+    client.onDeviceMethod('block', onBlock);
+    client.onDeviceMethod('release', onRelease);
+
+    return callback(null)
+}
+var onWriteLine= function (request, response) {
+    console.log(request.payload);
+    response.send(200, 'Input was written to log.', function (err) {
+        if (err) {
+            console.error('An error ocurred when sending a method response:\n' + err.toString());
+        } else {
+            console.log('Response to method \'' + request.methodName + '\' sent successfully.');
+        }
+    });
+}
+
 var onBlock = function (request, response) {
-    var client = clientFromConnectionString(utils.getDevice().cs);
     // Respond the cloud app for the direct method
     response.send(200, 'Electricity supply is now blocked', function (err) {
-        if (!err) {
+        if (err) {
             console.error('An error occured when sending a method response:\n' + err.toString());
         } else {
             console.log('Response to method \'' + request.methodName + '\' sent successfully.');
@@ -23,84 +38,33 @@ var onBlock = function (request, response) {
     });
 
     // Report the block 
-    var date = new Date();
-    var patch = {
-        iothubDM: {
-            block: {
-                lastBlock: date.toISOString(),
-            }
-        }
-    };
+    updateTwin('blockTimeStamp', new Date().toISOString());
 
-    // Get device Twin
-    client.getTwin(function (err, twin) {
-        if (err) {
-            console.error('could not get twin: ' + JSON.stringify(err));
-        } else {
-            console.log('twin acquired');
-            twin.properties.reported.update(patch, function (err) {
-                if (err) throw err;
-                console.log('Device twin state reported')
-            });
-        }
-    });
-
-    // Block API for physical restart.
-    console.log('Blocking!');
+    var device = utils.getDevice();
+    device.status = 'blocked';
 };
 
 var onRelease = function (request, response) {
-    // do something here
-    console.log('releasing...')
-}
-// twin properties
-var updateTwin = function (property, value) {
-    switch (property) {
-        case 'appl':
-            var appArray = utils.getAppliances()
-            var patch = {
-                tags: {
-                    appliances: {
-                        applArray: ['a', 'b']
-                    }
-                }
-            };
-            writeTag(patch);
-            break;
-        case 'interval':
-            var patch = {
-                interval: {
-                    ms: value
-                }
-            };
-            writeProp(patch);
-            break;
-        case 'msgType':
-            var patch = {
-                telemetry: {
-                    msgType: value
-                }
-            };
-            console.log(patch)
-            
-            writeProp(patch);
-            break;
-        case 'connType':
-            var patch = {
-                connectivity: {
-                    type: value
-                }
-            };
-            writeProp(patch);
-            break;
-    }
+
+    response.send(200, 'Electricity supply is now restored', function (err) {
+        if (err) {
+            console.error('An error occured when sending a method response:\n' + err.toString());
+        } else {
+            console.log('Response to method \'' + request.methodName + '\' sent successfully.');
+        }
+    });
+
+    utils.getDevice().status = 'active';
 }
 
-var writeProp = function (patch) {
+// twin properties
+var updateTwin = function (property, value) {
     utils.getClient().getTwin(function (err, twin) {
-        if (err)  // ANOTHER MAJOR UPSET - CLEAN UP LATER -> Need to return error so the calling route can exit gracefully
+        if (err)
             msg = 'could not get twin: ' + JSON.stringify(err);
         else {
+            console.log(property, value)
+            var patch = { [property]: value }
             twin.properties.reported.update(patch, function (err) {
                 if (err)
                     console.log(err)
@@ -112,6 +76,7 @@ var writeProp = function (patch) {
     });
 }
 
-module.exports.onBlock = onBlock;
-module.exports.onRelease = onRelease;
+module.exports.initDM = initDM;
+//module.exports.onBlock = onBlock;
+//module.exports.onRelease = onRelease;
 module.exports.updateTwin = updateTwin;

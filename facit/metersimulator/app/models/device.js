@@ -3,14 +3,12 @@
 function Device() {
   this.deviceId = null;
   this.cs = null;
-  this.hubcs = null;
   this.appliances = [];
-  this.location = 'not set';
-  this.fw_version = 'not set';
+  this.status = 'inactive';
+  this.telemetry = { "frequency": 30000, "type": "delta" };
+  this.messaging = 'off';
   this.connType = 'not set';
-  this.msgType = 'stream';
-  this.interval = 60000;
-  this.regStatus = true;
+  this.fw = 'not set'
 }
 
 

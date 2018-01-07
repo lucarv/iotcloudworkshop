@@ -1,60 +1,56 @@
 'use strict';
-
+var jsonfile = require('jsonfile')
 var Device = require('../models/device');
 var devfunc = require('./devfunc');
-var fs = require('fs');
+var house = require('./config/house.json');
+var thisDevice = require('./config/device.json')
+
+var request = require("request-json");
+var regUri = 'https://luca-devreg.azurewebsites.net'
+
 var client = null;
 
 var device;
 var appliances = [], applon = [];
 var pwr = 0;
 var exists = false;
-/*
-*
-* read the registered appliances for this house
-* set them all to false (off)
-*
-*/
-fs.readFile('./config/house.json', 'utf8', function (err, appl) {
-    if (err) {
-        console.log(err);
-    }
-    appliances = JSON.parse(appl)
-});
 
 function getExists(callback) {
-    fs.readFile('./config/device.json', 'utf8', function (err, savedDevice) {
-        if (err) {
-            return callback(err);
-        }
-        else {
-            if (savedDevice.length > 0 && savedDevice !== 'undefined') {
-                // create model from file
-                var jsonDevice = JSON.parse(savedDevice);
-                device = new Device();
-                device.hubcs = jsonDevice.hubcs;
-                device.deviceId = jsonDevice.deviceId;
-                device.cs = jsonDevice.cs;
-                device.connType = jsonDevice.connType;
-                device.fw_version = jsonDevice.fw_version;
-                device.interval = jsonDevice.interval;
-                device.location = jsonDevice.location;
-                device.msgType = jsonDevice.msgType;
-                
-                return callback(null, device);
-            }
-            else {
-                return callback(null, null)
-            }
-        }
+
+    if (thisDevice !== null) {
+        // create model from file
+        device = new Device();
+        device.deviceId = thisDevice.deviceId;
+        device.cs = thisDevice.cs;
+        return callback(null, device);
+    }
+    else {
+        return callback(null, null)
+    }
+}
+
+function regDevice(devId, custIdx, callback) {
+    var client = request.createClient(regUri);
+    var data = {
+        "deviceId": devId,
+        "customerId": custIdx
+    };
+    client.post('/', data, function (err, res, body) {
+        return callback(null, res.body.deviceKey);
     });
+
 }
 
 function getDevice() {
     return device;
 }
+
 function setDevice(dev) {
     device = dev;
+    persistDevice(dev, function (err) {
+        if (err)
+            console.log(err)
+    });
 }
 function getClient() {
     return client;
@@ -73,11 +69,11 @@ function resetHouse() {
 }
 
 function getAppliances() {
-    return appliances 
+    return appliances
 }
 
 function setAppliances(appl) {
-    fs.writeFile('./config/house.json', JSON.stringify(appl), function (err) {
+    jsonfile.writeFile('./app/lib/config/house.json', appl, function (err) {
         if (err)
             return err;
     });
@@ -94,7 +90,8 @@ function persistDevice(device, callback) {
     if (device) {
         console.log('persisting device object')
         console.log(device)
-        fs.writeFile('./config/device.json', JSON.stringify(device), function (err) {
+
+        jsonfile.writeFile('./app/lib/config/device.json', device, function (err) {
             if (err)
                 return callback(err);
             else
@@ -127,12 +124,14 @@ module.exports.resetHouse = resetHouse;
 
 module.exports.persistDevice = persistDevice;
 module.exports.getExists = getExists;
+module.exports.regDevice = regDevice;
+
 module.exports.setDevice = setDevice;
-module.exports.getDevice = getDevice;
 module.exports.setClient = setClient;
 module.exports.getClient = getClient;
 
 
+module.exports.getDevice = getDevice;
 
 
 

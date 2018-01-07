@@ -2,17 +2,19 @@ extends layout
 
 block content
   .panel.panel-default
-    .panel-heading Device Connectivity Management
+    .panel-heading Register Device
     .panel-body        
       form(action='/', method='post', id='formb')
         fieldset
           .form-group.row
             .col-sm-4
-              input.form-control(type='text', name='devID', placeholder='device identity') 
-            .col-sm-8
-              input.form-control(type='text', name='cs', placeholder='iot hub connection string') 
-
-                           
+              input.form-control(type='text', name='devID', placeholder='device identity' required) 
+            .col-sm-4
+              .input-group
+                select#form.form-control(name = "custIdx" required)
+                  each customer, i in customerList
+                    option(value=i) #{customer}
       button.btn.btn-space.btn-primary(type='submit', name="action", form='formb', value='register') register
+
 
 

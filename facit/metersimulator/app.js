@@ -7,7 +7,7 @@ ON_DEATH(function(signal, err) {
 })
 */
 //on windows
-
+/*
 process.on('SIGINT', function () {
   console.log('trying shutting down. clean up...')
 
@@ -29,8 +29,9 @@ process.on('SIGINT', function () {
       });
     }
   });
-});
 
+});
+  */
 
 var express = require('express'),
   config = require('./config/config');
@@ -52,7 +53,7 @@ else {
 }
 
 var server = app.listen(port, function () {
-  console.log('Express server listening on port ' + port);
+  console.log('device simulator server listening on port ' + port);
 });
 
 

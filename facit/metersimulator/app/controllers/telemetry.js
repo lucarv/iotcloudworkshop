@@ -14,25 +14,25 @@ router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
 
 // azure sdk
-var iothub = require('azure-iothub');
 var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
 var Message = require('azure-iot-device').Message;
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var desiredVersion = null;
-var registry, client;
+var client;
 
 var startTelemetry = function () {
     var client = utils.getClient();
-    device.telemetry = true;
-    // NOTE -> uses a global var interval, maybe better to localized it
+
     // Create a message and send it to the IoT Hub at interval
     myTimer = setInterval(function () {
-        if (device.telemetry === 'change') {
+        if (device.messaging === 'change') {
             clearInterval(myTimer);
-            device.telemetry = false;
+            device.messaging = 'off';
             startTelemetry();
-        }
+        } else
+            device.messaging = 'on';
+
         var reading = utils.getConsumption();
         var data = JSON.stringify({
             deviceId: device.deviceId,
@@ -42,12 +42,12 @@ var startTelemetry = function () {
         });
         var message = new Message(data);
 
-        //akert for high consumption
+        //alert for high consumption
         if (reading.pwr > 100) {
             message.properties.add('usagealert', 'true');
         }
 
-        if (device.msgType === 'delta' && reading.pwr == lastMeterReading)
+        if (device.telemetry.type === 'delta' && reading.pwr == lastMeterReading)
             console.log('skip messaging as no changes');
         else
             client.sendEvent(message, function (err, res) {
@@ -57,7 +57,7 @@ var startTelemetry = function () {
                     if (res) console.log('Message sending status: ' + res.constructor.name + ' > ' + new Date().toISOString());
             })
         lastMeterReading = reading.pwr;
-    }, device.interval);
+    }, device.telemetry.frequency);
 }
 
 // ROUTING
@@ -67,50 +67,49 @@ module.exports = function (app) {
 
 router.get('/telemetry', function (req, res, next) {
     device = utils.getDevice();
+    console.log(device);
+
     res.render('telemetry', {
         title: "smart meter simulator",
-        interval: device.interval,
-        msgType: device.msgType,
-        deviceId: device.deviceId
+        frequency: device.telemetry.frequency,
+        teleType: device.telemetry.type,
+        deviceId: device.deviceId,
+        status: device.status
     });
 });
 
-router.post('/telemetry', function (req, res, next) {
-    if (device.regStatus == 'disabled') {
+router.post('/telemetry', function (req, res, next) {  
+    if (device.status !== 'active') {
         res.render('telemetry', {
             title: "smart meter simulator",
             deviceId: device.deviceId,
+            status: device.status,
             footer: 'ERROR: device is disabled, can\'t start telemetry'
         });
     } else {
         switch (req.body.action) {
-            case 'on':           
-                if (req.body.hasOwnProperty('interval')) {
-                    device.interval = req.body.interval;
-                    devfunc.updateTwin('interval', device.interval);
-                }
-                if (req.body.hasOwnProperty('msgType')) {
-                    device.msgType = req.body.msgType;
-                    devfunc.updateTwin('msgType', device.msgType);
-                }
-
+            case 'on':
                 startTelemetry();
-                var msg = 'SUCCESS: starting telemetry at ' + device.interval + ' ms interval';
 
                 res.render('telemetry', {
                     title: "smart meter simulator",
                     deviceId: device.deviceId,
-                    interval: device.interval,
-                    footer: msg
+                    frequency: device.telemetry.frequency,
+                    teleType: device.telemetry.type,
+                    status: device.status,
+                    footer: 'SUCCESS: starting telemetry at ' + device.telemetry.frequency + ' ms interval'
                 });
                 break;
             case 'off':
                 clearInterval(myTimer);
-                device.telemetry = false;
+                device.messaging = 'off';
                 res.render('telemetry', {
                     title: "smart meter simulator",
                     deviceId: device.deviceId,
-                    footer: 'Telemetry stopped.'
+                    frequency: device.telemetry.frequency,
+                    teleType: device.telemetry.type,
+                    status: device.status,
+                    footer: 'SUCCESS: Telemetry stopped.'
                 });
                 break;
         }

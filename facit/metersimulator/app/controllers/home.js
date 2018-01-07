@@ -3,91 +3,62 @@ var express = require('express'),
     router = express.Router();
 var utils = require('../lib/utils');
 var devfunc = require('../lib/devfunc');
-
 var Device = require('../models/device'),
     device;
 
 //middleware
 var bodyParser = require('body-parser');
+var request = require('request');
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
 
 // azure sdk
-var iothub = require('azure-iothub');
 var clientFromConnectionString = require('azure-iot-device-mqtt').clientFromConnectionString;
-var Message = require('azure-iot-device').Message;
 var Client = require('azure-iot-device').Client;
-var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var desiredVersion = null;
-var registry, client;
+var client, thisTwin;
+var hubName, customerList;
 
 var deviceKey = '';
 var deviceId = '';
-var cs = '', devCS = '', hubName = '';
 var msg = '',
-    c2dmsg = 'no message reveived';
+    c2dmsg = 'false';
 var appliancesArray = [];
 
 // auxiliary functions
+function initDevice(did, key) {
+    device = new Device();
 
-function initDevice(cs, did, key) {
     device.deviceId = did;
-    device.hubName = cs.substring(cs.indexOf('=') + 1, cs.indexOf(';'));
-    device.hubcs = cs;
-    device.cs = 'HostName=' + device.hubName + ';DeviceId=' + did + ';SharedAccessKey=' + key;
+    device.cs = 'HostName=' + hubName + ';DeviceId=' + did + ';SharedAccessKey=' + key;
     device.appliances = utils.initAppliances();
-    device.interval = 30000;
-    device.msgType = 'stream'
 }
 
-function createSession(callback) {
-    client = clientFromConnectionString(device.cs);
-    utils.setClient(client);
-    client.open(function (err) {
-        if (err) { //something really fishy, report and leave the flow
-            callback(err);
+function configDevice(callback) {
+    client.getTwin(function (err, twin) { // check if he telemetry interval has ben set by the operator    
+        if (err) {
+            return callback(err);
         } else {
-            // subscribed to property changes
-            // ARCH NOTE: move this outside of this loop
-            client.getTwin(function (err, twin) { // check if he telemetry interval has ben set by the operator    
-                if (err) {
-                    callback(err);
-                } else {
-                    twin.on('properties.desired', function (desiredChange) {
-                        console.log('desired property change')
-                        if (twin.properties.desired.$version !== desiredVersion) {
-                            desiredVersion = twin.properties.desired.$version;
-                            // stop telemetry and restart again with a new frequency
-                            if (desiredChange.hasOwnProperty('interval')) {
-                                device.interval = desiredChange.interval.ms
-                                devfunc.updateTwin('interval', device.interval);
-                            }
-                            if (desiredChange.hasOwnProperty('telemetry')) {
-                                console.log(desiredChange)
-                                device.msgType = desiredChange.telemetry.msgType
-                                devfunc.updateTwin('msgType', device.msgType);
-                            }
-                            if (device.telemetry) {
-                                device.telemetry = 'change';
-                            }
-                            // add code here to manage other desired properties
-                            // such as desired FW version
-                            // .......
-                        }
-                    });
-                }
-            });
-            // ARCH NOTE: read last received message -> move this outside this loop
-            client.on('message', function (msg) {
-                c2dmsg = ('Id: ' + msg.messageId + ' Body: ' + msg.data);
-                console.log(c2dmsg)
-                client.complete(msg, function(err){
-                    console.log(err)
-                });
-            });
-            callback(null);
+            thisTwin = twin;
         }
-    });
+        twin.on('properties.desired', function (desiredChange) {
+            if (twin.properties.desired.$version !== desiredVersion) {
+                desiredVersion = twin.properties.desired.$version;
+
+                console.log(desiredChange)
+                // stop telemetry and restart again with a new frequency
+                if (desiredChange.hasOwnProperty('telemetry')) {
+                    device.telemetry = desiredChange.telemetry
+                }
+
+                if (device.messaging = 'on') {
+                    device.messaging = 'change';
+                }
+            }
+        });
+
+        return callback(null);
+    })
 }
 
 // ROUTING
@@ -97,34 +68,25 @@ module.exports = function (app) {
 
 router.get('/', function (req, res, next) {
     utils.getExists(function (err, dev) {
-        if (err)
-            res.render('error', { error: err });
-        else {
-            if (!dev) {
-                device = new Device();
+        if (!dev) {
+            request('http://localhost:3000', function (error, response, body) {
+                customerList = JSON.parse(body).customerList;
                 res.render('index', {
-                    title: "smart meter simulator",
+                    title: "SUCCESS: smart meter simulator",
                     deviceId: 'not registered',
-                    status: 'false',
-                    footer: 'NOTE: The IOT HUB connection string is available on the azure portal'
+                    status: 'inactive',
+                    customerList: customerList
                 });
-            }
-            else {
-                device = dev;
-                console.log(dev)
-                createSession(function (err) {
-                    if (err)
-                        res.render('error', { error: err });
-                    else
-                        res.render('status', {
-                            title: "smart meter simulator",
-                            deviceId: device.deviceId,
-                            status: 'enabled',
-                            footer: 'WARNING: ' + device.deviceId + ' already registered'
-                        });
-                });
-            }
-            utils.setDevice(device);            
+            });
+        } else {
+            device = dev
+            res.render('status', {
+                title: "smart meter simulator",
+                deviceId: device.deviceId,
+                status: 'inactive',
+                footer: 'SUCCESS: ' + deviceId + ' previously registered'
+
+            });
         }
     });
 });
@@ -132,41 +94,19 @@ router.get('/', function (req, res, next) {
 router.post('/', function (req, res, next) {
     switch (req.body.action) {
         case 'register':
-            var hubcs = req.body.cs;
+            hubName = customerList[req.body.custIdx] + '.azure-devices.net'
             var did = req.body.devID;
-
-            registry = iothub.Registry.fromConnectionString(hubcs);
-            registry.create({ deviceId: did }, function (err, deviceInfo, result) {
-                if (err) { // error registering to hub
-                    registry.get(did, function (err, deviceInfo, res) {
-                        if (deviceInfo) {
-                            deviceKey = deviceInfo.authentication.symmetricKey.primaryKey;
-                            initDevice(hubcs, did, deviceKey);
-                        }
-                        else // something really wrong happened, break the flow and show the error
-                            res.render('error', { error: err });
-                    });
-                    res.render('index', {
+            utils.regDevice(did, req.body.custIdx, function (err, devKey) {
+                if (err)
+                    res.render('error', { error: err });
+                else {
+                    initDevice(did, devKey);
+                    utils.setDevice(device);
+                    res.render('status', {
                         title: "smart meter simulator",
                         deviceId: did,
-                        footer: "ERROR: " + err.message
-                    });
-                } else {
-                    deviceKey = deviceInfo.authentication.symmetricKey.primaryKey;
-                    initDevice(hubcs, did, deviceKey);
-                    utils.setDevice(device);
-                    createSession(function (err) {
-                        if (err)
-                            res.render('error', { error: err });
-                        else {
-                            msg = 'SUCCESS: ' + deviceId + ' registered with IoT Hub';
-                            res.render('status', {
-                                title: "smart meter simulator",
-                                deviceId: did,
-                                status: device.regStatus,
-                                footer: msg
-                            });
-                        }
+                        status: 'inactive',
+                        footer: 'SUCCESS: ' + deviceId + ' registered with IoT Hub'
                     });
                 }
             });
@@ -179,41 +119,78 @@ router.post('/', function (req, res, next) {
     }
 });
 
-router.post('/status', function (req, res, next) {
-    var registry = iothub.Registry.fromConnectionString(device.hubcs);
-    var newStatus = 'enabled';
-    if (device.regStatus === 'enabled')
-        newStatus = 'disabled';
-
-    registry.update({ deviceId: device.deviceId, status: newStatus }, function (err, deviceInfo, result) {
-        if (err)
-            res.render('error', { error: err });
-        else {
-            if (newStatus === 'enabled') {
-                createSession(function () {
-                    res.render('telemetry', {
-                        title: "smart meter simulator",
-                        deviceId: deviceId,
-                        footer: 'device is enabled, start telemetry'
-                    });
-                });
-            } else {
-                res.render('status', {
-                    title: "smart meter simulator",
-                    deviceId: deviceId,
-                    footer: 'status changed to: ' + newStatus
-                });
-            }
-
-        }
+router.get('/status', function (req, res, next) {
+    res.render('status', {
+        title: "smart meter simulator",
+        deviceId: device.deviceId,
+        status: device.status
     });
 })
 
+router.post('/status', function (req, res, next) {
+    var errorFlag = false;
+
+    if (device.status == 'active') {
+        device.status = 'inactive';
+        res.render('status', {
+            title: "smart meter simulator",
+            deviceId: device.deviceId,
+            status: device.status,
+            footer: 'MQTT session created'
+        });
+    } else {
+        // OPEN CLIENT CONNECTION
+        client = clientFromConnectionString(device.cs);
+        utils.setClient(client);
+        client.open(function (err) {
+            if (err) { //something really fishy, report and leave the flow
+                res.render('error', { error: err });
+            } else {
+                device.status = 'active';
+            configDevice(function(err){
+                if (err) { //something really fishy, report and leave the flow
+                    res.render('error', { error: err });
+                }res.render('status', {
+                    title: "smart meter simulator",
+                    deviceId: device.deviceId,
+                    status: device.status,
+                    footer: 'MQTT session created'
+                });
+            });
+
+            };
+        });
+    }
+
+    //listener for direct messages
+    client.on('message', function (msg) {
+        console.log(msg)
+        c2dmsg = msg;
+        console.log(c2dmsg)
+        client.complete(msg, function (err) {
+            if (err)
+                console.log(err)
+        });
+    });
+
+    // register listeners to direct methods
+    devfunc.initDM(client, function (err) {
+        if (err)
+            errorFlag = true;
+    });
+});
+
 router.get('/c2d', function (req, res, next) {
+    if (c2dmsg === '')
+        msg = 'no c2d received'
+    else
+        msg = c2dmsg.data.toString()
+
     res.render('c2d', {
         title: "smart meter simulator",
         deviceId: deviceId,
-        msg: c2dmsg
+        id: c2dmsg.messageId,
+        data: msg
     });
 })
 
