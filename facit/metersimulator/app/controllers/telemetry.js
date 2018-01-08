@@ -47,7 +47,7 @@ var startTelemetry = function () {
             message.properties.add('usagealert', 'true');
         }
 
-        if (device.telemetry.type === 'delta' && reading.pwr == device.lastTelemetry.value)
+        if (device.telemetry.type === 'delta' && Math.round(reading.pwr) == Math.round(device.lastTelemetry.value))
             console.log('skip messaging as no changes');
         else
             client.sendEvent(message, function (err, res) {

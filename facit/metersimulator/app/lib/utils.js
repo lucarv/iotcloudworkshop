@@ -114,7 +114,8 @@ function getConsumption() {
             applon.push(house[i].name)
         }
     }
-    var reading = { "pwr": pwr, "appls": applon };
+    var variance = Math.random() * 2 - 1
+    var reading = { "pwr": pwr + variance, "appls": applon };
     return reading;
 }
 
