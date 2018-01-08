@@ -21,7 +21,7 @@ var desiredVersion = null;
 var hubName, customerList, custIdx;
 
 var deviceKey = '', deviceId = '';
-var msg = '', c2dmsg = 'false';
+var msg = '', c2dmsg = '';
 var appliancesArray = [];
 
 /*
@@ -39,6 +39,7 @@ function initDevice(did, key) {
 * configure according to twin properties
 */
 function configDevice(callback) {
+    var expressFlag = true;
     client.getTwin(function (err, twin) { // check if he telemetry interval has ben set by the operator    
         if (err) {
             return callback(err);
@@ -55,8 +56,11 @@ function configDevice(callback) {
                         }
                     }
                 }
+                if (expressFlag) {
+                    expressFlag = false;
+                    return callback(null);
+                }
             });
-        return callback(null);
     })
 }
 
@@ -76,6 +80,7 @@ module.exports = function (app) {
 router.get('/', function (req, res, next) {
     utils.readFromConfig(function (err, dev) {
         if (!dev) {
+            
             request(registrarUri, function (error, response, body) {
                 customerList = JSON.parse(body).customerList;
 

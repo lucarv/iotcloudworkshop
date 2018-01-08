@@ -1,1 +1,1 @@
-null
+{"deviceId":"testdev-001","cs":"HostName=luca-cws-iothub.azure-devices.net;DeviceId=testdev-001;SharedAccessKey=qNc3SMdKoUCTzkLvtHHirxGBqc4orqLzFO2Pf0TT4Kk=","appliances":[{"name":"fridge","kwm":"12","state":true},{"name":"freezer","kwm":"14","state":true},{"name":"aircon","kwm":"18","state":false},{"name":"boiler","kwm":"16","state":true}],"status":"inactive","telemetry":{"frequency":30000,"type":"delta"},"messaging":"off","connType":"not set","fw":"not set","lastTelemetry":{"value":"unknown","timeStamp":"unknown"}}

@@ -15,8 +15,7 @@ html(lang='en')
       script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js')
       script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js")
     block js
-      if ENV_DEVELOPMENT
-        script(src='http://localhost:35729/livereload.js')
+
   body
     .panel.panel-default
       .panel-heading Register Device
@@ -24,13 +23,13 @@ html(lang='en')
         form(action='/', method='post', id='regform')
           fieldset
             .form-group.row
-              .col-xs-5
+              .col-sm-5
                 input.form-control(type='text', name='devID', placeholder='device identity' required) 
-              .col-xs-6
+              .col-sm-5
                 select.selectpicker.form-control(name='custIdx')
                   each customer, i in customerList
                     option(value=i) #{customer}
-              .col-xs-1
+              .col-sm-2
                 button.btn.btn-space.btn-primary(type='submit', name="action", form='regform', value='register') register            
 
 

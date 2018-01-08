@@ -31,14 +31,14 @@ block content
             form(action='/properties', method='post')
                 fieldset
                     .form-group.row
-                        .col-sm-2
-                            .input-group
-                                select#form.form-control(name = "connType")
-                                    option(value='') connectivity type
-                                    option(value='cellular') cellular
-                                    option(value='wifi') wifi
-                                    option(value='fixed') fixed 
-                        .col-sm-4
+                        .col-sm-5
                             input.form-control(type='text', name='fw', placeholder='fw version: ' + fw) 
-                        .col-sm-1                                 
+                        .col-sm-5
+                            select.selectpicker#form.form-control(name = "connType")
+                                option(value='') connectivity type
+                                option(value='cellular') cellular
+                                option(value='wifi') wifi
+                                option(value='fixed') fixed 
+
+                        .col-sm-2                                 
                             button.btn.btn-primary(type='submit') update 

@@ -77,6 +77,4 @@ var updateTwin = function (property, value) {
 }
 
 module.exports.initDM = initDM;
-//module.exports.onBlock = onBlock;
-//module.exports.onRelease = onRelease;
 module.exports.updateTwin = updateTwin;
