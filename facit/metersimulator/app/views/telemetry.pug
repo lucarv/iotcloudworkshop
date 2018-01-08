@@ -2,23 +2,25 @@ extends layout
 
 block content
     .panel.panel-default
-        .panel-heading Device Telemetry [ #{status} ]
+        .panel-heading Device Telemetry 
         .panel-body  
             if status == 'active'       
                 form(action='/telemetry', method='post', id='formb')
                     fieldset
                         .form-group.row
-                            .col-sm-4
+                            .col-sm-6
                                 input.form-control(type='text', placeholder='frequency: ' + frequency readonly) 
-                            .col-sm-4
+                            .col-sm-6
                                 input.form-control(type='text', placeholder='telemetry type: ' + teleType readonly)  
-                        .form-group.row                           
-                            .col-xs-1
-                                button.btn.btn-space.btn-default(type='submit', form='formb', name='action', value='on') 
-                                    span.glyphicon.glyphicon-play                                                                       
-                            .col-xs-1
-                                button.btn.betn-space.btn-default(type='submit', form='formb', name='action', value='off')
-                                    span.glyphicon.glyphicon-pause 
+                        .form-group.row   
+                            .col-xs-4
+                                input.form-control(type='text', placeholder='messaging: ' + messaging readonly) 
+                            if messaging == "off"
+                                .col-xs-1
+                                    button.btn.btn-space.btn-default(type='submit', form='formb', name='action', value='on') start
+                            else if messaging == "on"
+                                .col-xs-1
+                                    button.btn.betn-space.btn-default(type='submit', form='formb', name='action', value='off') pause
             else if status == 'inactive'
                 p Device is Inactive - Please Activate                                                                                              
             else

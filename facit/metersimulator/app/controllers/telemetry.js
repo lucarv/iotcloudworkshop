@@ -19,7 +19,6 @@ var Message = require('azure-iot-device').Message;
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var desiredVersion = null;
-var client;
 
 var startTelemetry = function () {
     var client = utils.getClient();
@@ -34,9 +33,10 @@ var startTelemetry = function () {
             device.messaging = 'on';
 
         var reading = utils.getConsumption();
+        var timeStamp = new Date().toISOString();
         var data = JSON.stringify({
             deviceId: device.deviceId,
-            timestamp: Date.now(),
+            timestamp: timeStamp,
             consumption: reading.pwr,
             appliances: reading.applon
         });
@@ -47,16 +47,19 @@ var startTelemetry = function () {
             message.properties.add('usagealert', 'true');
         }
 
-        if (device.telemetry.type === 'delta' && reading.pwr == lastMeterReading)
+        if (device.telemetry.type === 'delta' && reading.pwr == device.lastTelemetry.value)
             console.log('skip messaging as no changes');
         else
             client.sendEvent(message, function (err, res) {
                 if (err)
                     console.log('Message sending error: ' + err.toString());
-                else
-                    if (res) console.log('Message sending status: ' + res.constructor.name + ' > ' + new Date().toISOString());
+                else {
+                    device.lastTelemetry.timeStamp = timeStamp;
+                    if (res) console.log('Message sending status: ' + res.constructor.name + ' > ' + timeStamp);
+                    device.lastTelemetry.value = reading.pwr;
+
+                }
             })
-        lastMeterReading = reading.pwr;
     }, device.telemetry.frequency);
 }
 
@@ -67,14 +70,14 @@ module.exports = function (app) {
 
 router.get('/telemetry', function (req, res, next) {
     device = utils.getDevice();
-    console.log(device);
 
     res.render('telemetry', {
         title: "smart meter simulator",
         frequency: device.telemetry.frequency,
         teleType: device.telemetry.type,
         deviceId: device.deviceId,
-        status: device.status
+        status: device.status,
+        messaging: device.messaging
     });
 });
 
@@ -84,6 +87,7 @@ router.post('/telemetry', function (req, res, next) {
             title: "smart meter simulator",
             deviceId: device.deviceId,
             status: device.status,
+            messaging: device.messaging,
             footer: 'ERROR: device is disabled, can\'t start telemetry'
         });
     } else {
@@ -97,6 +101,7 @@ router.post('/telemetry', function (req, res, next) {
                     frequency: device.telemetry.frequency,
                     teleType: device.telemetry.type,
                     status: device.status,
+                    messaging: device.messaging,
                     footer: 'SUCCESS: starting telemetry at ' + device.telemetry.frequency + ' ms interval'
                 });
                 break;
@@ -109,6 +114,7 @@ router.post('/telemetry', function (req, res, next) {
                     frequency: device.telemetry.frequency,
                     teleType: device.telemetry.type,
                     status: device.status,
+                    messaging: device.messaging,
                     footer: 'SUCCESS: Telemetry stopped.'
                 });
                 break;

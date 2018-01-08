@@ -8,7 +8,8 @@ function Device() {
   this.telemetry = { "frequency": 30000, "type": "delta" };
   this.messaging = 'off';
   this.connType = 'not set';
-  this.fw = 'not set'
+  this.fw = 'not set',
+  this.lastTelemetry = {"value": "unknown", "timeStamp": "unknown"}
 }
 
 

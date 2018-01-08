@@ -1,20 +1,39 @@
-extends layout
+doctype html
+html(lang='en')
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width')
+    title= title
+    block css
+      link(href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel='stylesheet')
+      link(href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", rel="stylesheet")
+      link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css")
+      link(rel='stylesheet', href='/css/style.css')
+      link(rel='stylesheet', href='/css/blue-footer.css')
 
-block content
-  .panel.panel-default
-    .panel-heading Register Device
-    .panel-body        
-      form(action='/', method='post', id='formb')
-        fieldset
-          .form-group.row
-            .col-sm-4
-              input.form-control(type='text', name='devID', placeholder='device identity' required) 
-            .col-sm-4
-              .input-group
-                select#form.form-control(name = "custIdx" required)
+      script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js')
+      script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js')
+      script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js")
+    block js
+      if ENV_DEVELOPMENT
+        script(src='http://localhost:35729/livereload.js')
+  body
+    .panel.panel-default
+      .panel-heading Register Device
+      .panel-body        
+        form(action='/', method='post', id='regform')
+          fieldset
+            .form-group.row
+              .col-xs-5
+                input.form-control(type='text', name='devID', placeholder='device identity' required) 
+              .col-xs-6
+                select.selectpicker.form-control(name='custIdx')
                   each customer, i in customerList
                     option(value=i) #{customer}
-      button.btn.btn-space.btn-primary(type='submit', name="action", form='formb', value='register') register
+              .col-xs-1
+                button.btn.btn-space.btn-primary(type='submit', name="action", form='regform', value='register') register            
 
 
 
+
+    

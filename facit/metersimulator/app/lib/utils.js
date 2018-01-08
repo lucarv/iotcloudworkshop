@@ -6,12 +6,13 @@ var house = require('./config/house.json');
 var thisDevice = require('./config/device.json')
 
 var request = require("request-json");
-var regUri = 'https://luca-devreg.azurewebsites.net'
+var registrarUri = 'https://luca-devreg.azurewebsites.net'
+
 
 var client = null;
 
 var device;
-var appliances = [], applon = [];
+var applon = [];
 var pwr = 0;
 var exists = false;
 
@@ -29,16 +30,36 @@ function readFromConfig(callback) {
     }
 }
 
-function regDevice(devId, custIdx, callback) {
-    var client = request.createClient(regUri);
+function registrar(action, devId, custIdx, callback) {
+    var client = request.createClient(registrarUri);
     var data = {
         "deviceId": devId,
         "customerId": custIdx
     };
-    client.post('/', data, function (err, res, body) {
-        return callback(null, res.body.deviceKey);
-    });
 
+    switch (action) {
+        case 'create':
+            client.put('/', data, function (err, res, body) {
+                if (res.statusCode == 200)
+                    return callback(null, res.body.deviceKey);
+                else
+                    return calback(res.body.error)
+            });
+            break;
+        case 'delete':
+            var uri = '/' + 'idx/0' + '/device/' + devId;
+            client.delete(uri, data, function (err, res, body) {
+                if (err)
+                    return callback(err);
+                else {
+                    if (res.statusCode == 200)
+                        return callback(null);
+                    else
+                        return callback(res.body)
+                }
+            });
+            break;
+    };
 }
 
 function getDevice() {
@@ -59,17 +80,13 @@ function setClient(cli) {
     client = cli;
 }
 
-function initAppliances() {
-    return appliances;
-}
-
 function resetHouse() {
     appliances = allOff;
     applon = [];
 }
 
 function getAppliances() {
-    return appliances
+    return house
 }
 
 function setAppliances(appl) {
@@ -79,59 +96,43 @@ function setAppliances(appl) {
     });
 }
 
-function setTelemetryValues(values) {
-    if (values.hasOwnProperty('interval'))
-        device.interval = values.interval;
-    if (values.hasOwnProperty('msgType'))
-        device.msgType = values.msgType;
-}
-
 function persistDevice(device, callback) {
-    if (device) {
-        console.log('persisting device object')
-        console.log(device)
+    jsonfile.writeFile('./app/lib/config/device.json', device, function (err) {
+        if (err)
+            return callback(err);
+        else
+            return callback(null)
+    });
 
-        jsonfile.writeFile('./app/lib/config/device.json', device, function (err) {
-            if (err)
-                return callback(err);
-            else
-                return callback(null)
-        });
-    }
-    else
-        return callback(null)
 }
 
 function getConsumption() {
     pwr = 0;
-    for (var i = 0; i < appliances.length; i++) {
-        if (appliances[i].state) {
-            pwr += Number(appliances[i].kwm);
-            applon.push(appliances[i].name)
+    for (var i = 0; i < house.length; i++) {
+        if (house[i].state) {
+            pwr += Number(house[i].kwm);
+            applon.push(house[i].name)
         }
     }
     var reading = { "pwr": pwr, "appls": applon };
     return reading;
 }
 
-module.exports.setTelemetryValues = setTelemetryValues;
 module.exports.getConsumption = getConsumption;
 module.exports.getAppliances = getAppliances;
 module.exports.setAppliances = setAppliances;
-module.exports.initAppliances = initAppliances;
-
 module.exports.resetHouse = resetHouse;
 
+module.exports.registrar = registrar;
 module.exports.persistDevice = persistDevice;
 module.exports.readFromConfig = readFromConfig;
-module.exports.regDevice = regDevice;
-
+module.exports.getDevice = getDevice;
 module.exports.setDevice = setDevice;
+
 module.exports.setClient = setClient;
 module.exports.getClient = getClient;
 
 
-module.exports.getDevice = getDevice;
 
 
 

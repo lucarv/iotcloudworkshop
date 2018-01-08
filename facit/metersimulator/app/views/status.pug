@@ -1,15 +1,36 @@
 extends layout
 block content
-    .panel.panel-default
-        .panel-heading Device Status
-        .panel-body        
-            form(action='/status', method='post')
-                fieldset
-                    .form-group.row
-                        .col-sm-2
-                            .input-group
-                                input.form-control(type='text', placeholder=status readonly)
-                        .col.sm-4
-                            unless status == 'blocked'
-                                button.btn.btn-primary(type='submit') toggle
+    if status=='deleted'
+        .panel.panel-default
+            .panel-heading Device Status
+            .panel-body    
+                p device deleted, it needs to be registered again
+    else
+        .panel.panel-default
+            .panel-heading Device Status
+            .panel-body        
+                form(action='/status', method='post')
+                    fieldset
+                        .form-group.row
+                            .col-xs-4
+                                input.form-control(type='text', placeholder=status readonly)                              
+                            .col-xs-1
+                                unless status == 'blocked'
+                                    button.btn.btn-space.btn-default(type='submit', name='action', value='toggle') toggle
+                            .col-xs-1
+                                button.btn.btn-space.btn-danger(type='submit', name='action', value='delete') delete device 
+        .panel.panel-default                            
+            .panel-heading Telemetry Status 
+            .panel-body 
+                .col-sm-2
+                    label Current Status
+                    input.form-control(type='text', placeholder=messaging readonly)        
+                .col-sm-4
+                    label Last Telemetry Sent
+                    input.form-control(type='text', placeholder=tele.timeStamp readonly)
+                .col-sm-6
+                    label Consumption Reported
+                    input.form-control(type='text', placeholder=tele.value readonly)
+ 
+
                                 
