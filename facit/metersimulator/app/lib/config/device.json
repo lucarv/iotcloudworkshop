@@ -1,1 +1,1 @@
-{"deviceId":"simdev_001","cs":"HostName=luca-cws-iothub.azure-devices.net;DeviceId=simdev_001;SharedAccessKey=Mm5QS9wgEazo8qD2kXiUEG9tynbLZ4XADpPmbRb7R4s=","appliances":[{"name":"fridge","kwm":"12","state":true},{"name":"freezer","kwm":"14","state":true},{"name":"aircon","kwm":"18","state":true},{"name":"boiler","kwm":"16","state":false}],"status":"inactive","telemetry":{"frequency":30000,"type":"delta"},"messaging":"off","connType":"not set","fw":"not set","lastTelemetry":{"value":"unknown","timeStamp":"unknown"}}
+null
